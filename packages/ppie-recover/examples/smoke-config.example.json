@@ -1,0 +1,19 @@
+{
+	"$schema": "../schemas/smoke-config.schema.json",
+	"version": 1,
+	"forkSessionId": "<source-session-id>",
+	"prompt": "<reproduction prompt>",
+	"mode": "rpc",
+	"disableGlobalSkills": true,
+	"disableGlobalExtensions": true,
+	"load": [
+		{
+			"kind": "extension",
+			"value": "<first explicit extension, e.g. npm:@peachlife/ppie-recover>"
+		},
+		{ "kind": "extension", "value": "<second explicit extension>" },
+		{ "kind": "skill", "value": ".agents/skills/<first skill>" },
+		{ "kind": "skill", "value": ".agents/skills/<second skill>" },
+		{ "kind": "extension", "value": "<later extension>" }
+	]
+}

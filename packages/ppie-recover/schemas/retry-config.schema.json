@@ -1,0 +1,512 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "retry": {
+      "type": "object",
+      "properties": {
+        "max_attempts": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "string",
+              "const": "unlimited"
+            }
+          ],
+          "description": "Provider requests before recovery stops. 0 never retries; \"unlimited\" never gives up."
+        },
+        "seconds_before_first_retry": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Delay before the first retry."
+        },
+        "multiplier_between_attempts": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Geometric growth: delay = seconds_before_first_retry x multiplier^(attempt-1)."
+        },
+        "max_seconds_between_attempts": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Ceiling on the calculated delay."
+        },
+        "smart_overrides": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "max_attempts": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "string",
+                    "const": "unlimited"
+                  }
+                ],
+                "description": "Provider requests before recovery stops. 0 never retries; \"unlimited\" never gives up."
+              },
+              "seconds_before_first_retry": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Delay before the first retry."
+              },
+              "multiplier_between_attempts": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 60,
+                "description": "Geometric growth: delay = seconds_before_first_retry x multiplier^(attempt-1)."
+              },
+              "max_seconds_between_attempts": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Ceiling on the calculated delay."
+              },
+              "when": {
+                "type": "object",
+                "properties": {
+                  "error_codes": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 999
+                    },
+                    "description": "HTTP status codes this row matches. Example: [429, 503]."
+                  },
+                  "words": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Case-insensitive substrings of the error message. Example: [\"rate limit\", \"overloaded\"]."
+                  },
+                  "words_match": {
+                    "type": "string",
+                    "enum": [
+                      "any",
+                      "all"
+                    ],
+                    "description": "\"any\" matches when one word is present; \"all\" requires every word. Defaults to \"any\"."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Trigger clause. Supplying both kinds matches when either the code or the word clause matches.",
+                "patternProperties": {
+                  "^_": {
+                    "description": "Documentation metadata ignored by ppie-recover at runtime."
+                  }
+                }
+              },
+              "fallback_models": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[^/\\s]+\\/\\S+$"
+                }
+              }
+            },
+            "required": [
+              "when"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": {
+                "description": "Documentation metadata ignored by ppie-recover at runtime."
+              }
+            }
+          },
+          "description": "Per-error overrides of the values above, applied in declaration order with later explicit values winning. Not a separate budget: a matching row replaces which values the retry counter uses. A configured array replaces the shipped rows entirely."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Retries for errors where the provider returned nothing — network failures, 5xx, stream death, rate limits. The request is resent unchanged; no context intervention is attempted.",
+      "patternProperties": {
+        "^_": {
+          "description": "Documentation metadata ignored by ppie-recover at runtime."
+        }
+      }
+    },
+    "memory_overflow_protection": {
+      "type": "object",
+      "properties": {
+        "compaction": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "default": false,
+              "description": "Master switch for every compaction feature. When false, ppie-recover reads no other value in this object: it initiates no compaction, waits for none, and warns about none. Compaction is left entirely to Pi. Containment is positional and admits no exception — a nested value is governed by this switch whether it causes an action or is purely advisory. Nested values are retained, so re-enabling restores the configured behavior. The sibling prune group has its own enabled gate and is not governed by this switch.",
+              "type": "boolean"
+            },
+            "dynamic": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": false,
+                  "description": "Allow preventive compaction before an overflow occurs.",
+                  "type": "boolean"
+                },
+                "at_context_ratio": {
+                  "default": 0.8,
+                  "description": "Fraction of the model context window that triggers preventive compaction. Not an on/off switch: the value is retained while enabled is false. Evaluated at Pi's agent_settled checkpoint, so a continuous tool-use loop crossing the ratio is left running.",
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              },
+              "required": [
+                "enabled",
+                "at_context_ratio"
+              ],
+              "additionalProperties": false,
+              "description": "Preventive compaction at a context threshold. Independent of forced compaction; neither implies the other.",
+              "patternProperties": {
+                "^_": {
+                  "description": "Documentation metadata ignored by ppie-recover at runtime."
+                }
+              }
+            },
+            "forced": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": false,
+                  "description": "Allow ppie-recover to force a compaction when Pi has not resolved an overflow itself.",
+                  "type": "boolean"
+                },
+                "wait_seconds_before_first_attempt": {
+                  "default": 30,
+                  "description": "Delay before forcing the first compaction, independent of the retry schedule. If Pi core or another compaction extension starts one during this window, ppie-recover cancels its own and defers to that compaction without consuming an attempt.",
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max_attempts": {
+                  "default": 2,
+                  "description": "Forced compactions before recovery falls through to pruning. Own counter, independent of retry.max_attempts. One attempt is consumed per compaction that did not resolve the overflow — whether it failed mid-flight, reported nothing to compact, or completed without freeing enough. Minimum 1; use enabled to switch forced compaction off.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                "warn_after_seconds": {
+                  "default": 600,
+                  "description": "Advisory warning when a compaction has not finished. 0 disables. Never alters recovery state.",
+                  "type": "number",
+                  "minimum": 0
+                },
+                "give_up_after_no_progress_seconds": {
+                  "default": 180,
+                  "description": "First observation window of the two-stage abandonment check: compaction lifecycle state is snapshotted, then compared after this delay. 0 disables the watchdog.",
+                  "type": "number",
+                  "minimum": 0
+                },
+                "give_up_confirm_seconds": {
+                  "default": 480,
+                  "description": "Second observation window, entered only when the first found no change. Two consecutive unchanged observations release compaction ownership; abandoning never infers that the compaction completed.",
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "enabled",
+                "wait_seconds_before_first_attempt",
+                "max_attempts",
+                "warn_after_seconds",
+                "give_up_after_no_progress_seconds",
+                "give_up_confirm_seconds"
+              ],
+              "additionalProperties": false,
+              "description": "Compaction ppie-recover initiates itself after an overflow error that Pi has not resolved.",
+              "patternProperties": {
+                "^_": {
+                  "description": "Documentation metadata ignored by ppie-recover at runtime."
+                }
+              }
+            }
+          },
+          "required": [
+            "enabled",
+            "dynamic",
+            "forced"
+          ],
+          "additionalProperties": false,
+          "description": "Every compaction concern ppie-recover owns. Pi's native reserveTokens and keepRecentTokens are never altered.",
+          "patternProperties": {
+            "^_": {
+              "description": "Documentation metadata ignored by ppie-recover at runtime."
+            }
+          }
+        },
+        "prune": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "default": false,
+              "description": "Allow pruning after the forced-compaction budget is spent. Destructive; off by default.",
+              "type": "boolean"
+            },
+            "max_attempts": {
+              "default": 1,
+              "description": "Prune attempts before recovery stops. Own counter, independent of retry.max_attempts. Default 1: the removal target is calculated from the provider's reported overage plus reserve and margin, so a correct calculation clears the limit on the first attempt. A second attempt means the calculation was wrong, not that more removal was needed.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "removal_fractions": {
+              "default": [
+                0.25,
+                0.5,
+                0.75,
+                0.875
+              ],
+              "description": "Escalation ladder: the fraction of eligible content removed on each successive attempt. Unique and strictly increasing. Only the first entry is reached while max_attempts is 1.",
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "exclusiveMaximum": 1
+              }
+            },
+            "target_priorities": {
+              "description": "Higher priority is removed first; ties are removed oldest first.",
+              "type": "object",
+              "properties": {
+                "marked_blocks": {
+                  "default": 3,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "tool_results": {
+                  "default": 2,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "assistant_turns": {
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "marked_blocks",
+                "tool_results",
+                "assistant_turns"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": {
+                  "description": "Documentation metadata ignored by ppie-recover at runtime."
+                }
+              }
+            },
+            "tool_priorities": {
+              "default": {},
+              "description": "Removal order for named tool results within tool_results. Unlisted tools are ordered by age. Example: { \"bash\": 5, \"read\": 4 } removes bash output before read output.",
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "patternProperties": {
+                "^_": {
+                  "description": "Documentation metadata ignored by ppie-recover at runtime."
+                }
+              }
+            },
+            "block_markers": {
+              "default": [
+                "llm wiki",
+                "wiki",
+                "recall"
+              ],
+              "description": "Substrings identifying marked blocks, governed by target_priorities.marked_blocks.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "extra_overage_tokens": {
+              "default": 2000,
+              "description": "Headroom removed beyond the provider's measured overage, absorbing token-estimate error.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "enabled",
+            "max_attempts",
+            "removal_fractions",
+            "target_priorities",
+            "tool_priorities",
+            "block_markers",
+            "extra_overage_tokens"
+          ],
+          "additionalProperties": false,
+          "description": "Last resort after the forced-compaction budget is spent — or immediately when compaction is disabled. Unstable interface — it may change or be removed in a future version. Trims the outgoing provider payload only; session history is never rewritten, and prompts, skills, system instructions, and user messages are never eligible. Once recovery enters pruning it never returns to compaction.",
+          "patternProperties": {
+            "^_": {
+              "description": "Documentation metadata ignored by ppie-recover at runtime."
+            }
+          }
+        }
+      },
+      "required": [
+        "compaction",
+        "prune"
+      ],
+      "additionalProperties": false,
+      "description": "Recovery for errors caused by context size: token-window overflow and provider memory ceilings.",
+      "patternProperties": {
+        "^_": {
+          "description": "Documentation metadata ignored by ppie-recover at runtime."
+        }
+      }
+    },
+    "model_fallback": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "max_hops": {
+          "default": 3,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "enabled",
+        "max_hops"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {
+          "description": "Documentation metadata ignored by ppie-recover at runtime."
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "provider_silent": {
+          "type": "object",
+          "properties": {
+            "after_seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Silence duration before this hook runs."
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Shell command run with the CloudEvents envelope on stdin."
+            },
+            "timeout_seconds": {
+              "default": 30,
+              "description": "Maximum command runtime before its process group is killed.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "after_seconds",
+            "command",
+            "timeout_seconds"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": {
+              "description": "Documentation metadata ignored by ppie-recover at runtime."
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "description": "Trusted event reactions. Hooks never alter recovery state.",
+      "patternProperties": {
+        "^_": {
+          "description": "Documentation metadata ignored by ppie-recover at runtime."
+        }
+      }
+    },
+    "warnings": {
+      "type": "object",
+      "properties": {
+        "provider_silence_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Advisory warning when the provider has streamed nothing for this long."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Advisory thresholds. A warning never aborts, retries, compacts, or trims. The compaction warning lives at memory_overflow_protection.compaction.forced.warn_after_seconds.",
+      "patternProperties": {
+        "^_": {
+          "description": "Documentation metadata ignored by ppie-recover at runtime."
+        }
+      }
+    },
+    "debug": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "const": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute path to the debug log. Used verbatim — \"~\" is not expanded."
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": {
+              "description": "Documentation metadata ignored by ppie-recover at runtime."
+            }
+          }
+        }
+      ],
+      "description": "Diagnostic log. Sink failures are non-fatal and never interrupt recovery."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {
+      "description": "Documentation metadata ignored by ppie-recover at runtime."
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+	"name": "@peachlife/ppie-custom-provider",
+	"version": "0.1.0",
+	"description": "pi extension registering a generic OpenAI-compatible provider with dynamic model discovery",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PeachlifeAB/peach-pi-mono.git",
+		"directory": "packages/ppie-custom-provider"
+	},
+	"homepage": "https://github.com/PeachlifeAB/peach-pi-mono/tree/main/packages/ppie-custom-provider#readme",
+	"bugs": {
+		"url": "https://github.com/PeachlifeAB/peach-pi-mono/issues"
+	},
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi",
+		"openai-compatible",
+		"provider"
+	],
+	"type": "module",
+	"files": [
+		"src",
+		"openai-provider.example.json",
+		"README.md",
+		"LICENSE",
+		"!**/*.test.ts"
+	],
+	"pi": {
+		"extensions": [
+			"./src/index.ts"
+		]
+	},
+	"scripts": {
+		"test": "vitest run -c vitest.config.ts",
+		"debug:streaming": "node test/streaming-render-debug.ts",
+		"test:coverage": "vitest run -c vitest.config.ts --coverage",
+		"release": "npm publish --access public",
+		"prepublishOnly": "pnpm test"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "^1.4.0",
+		"@earendil-works/pi-coding-agent": "^1.4.0",
+		"@earendil-works/pi-tui": "^1.4.0"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*",
+		"typebox": "^1.3.30"
+	}
+}

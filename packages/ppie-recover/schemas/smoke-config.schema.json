@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Optional editor/IDE schema hint. Ignored by the launcher.",
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "number",
+      "const": 1,
+      "description": "Schema version. Only 1 is supported."
+    },
+    "forkSessionId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Pi session id to fork. Must belong to the project this config lives in; ownership is validated by Pi's own fork resolution at launch, never inferred from storage layout. The source session is forked, never resumed or mutated."
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The single reproduction prompt sent over RPC. Must be non-empty — the launcher sends nothing useful if the prompt is empty, and a no-op smoke is not a pass."
+    },
+    "mode": {
+      "type": "string",
+      "const": "rpc",
+      "description": "RPC mode keeps the process alive until a semantic result; print/interactive modes cannot."
+    },
+    "model": {
+      "description": "Optional exact model/provider ID to pass as --model. Use only when the repro requires pinning the same model as the source session; omit to inherit Pi/session defaults.",
+      "type": "string",
+      "minLength": 1
+    },
+    "disableGlobalSkills": {
+      "type": "boolean",
+      "description": "Emits --no-skills. Disables ambient/global skill discovery but must not discard explicit --skill args."
+    },
+    "disableGlobalExtensions": {
+      "type": "boolean",
+      "description": "Emits --no-extensions. Disables ambient/global extension discovery but must not discard explicit --extension args."
+    },
+    "load": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "extension",
+              "skill"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "description": "For extension: an npm spec (npm:...), a local absolute path, or a repo-relative path resolved by running pi from the config directory. For skill: a repo-relative path resolved against the config directory. No shell ~ expansion happens inside JSON; write explicit absolute paths for local extensions. Must be non-empty — a blank load entry would inject a flag with no value into pi's argv."
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "description": "One ordered list of explicit skills and extensions to load. Order is preserved exactly in pi's argv because extension/skill ordering can matter."
+    }
+  },
+  "required": [
+    "version",
+    "forkSessionId",
+    "prompt",
+    "mode",
+    "disableGlobalSkills",
+    "disableGlobalExtensions",
+    "load"
+  ],
+  "additionalProperties": false,
+  "$id": "https://ppie-recover/schemas/smoke-config.schema.json",
+  "title": "ppie-recover smoke config",
+  "description": "Live target facts for a real-settings forked smoke run. This file is NEVER checked in with real values (see .gitignore). The directory it lives in IS the owning project working directory; there is intentionally no projectDir field. The runner builds pi's argv solely from this file and runs pi from this directory."
+}

@@ -1,0 +1,31 @@
+{
+	// Strictness is deliberately set to what the packages were actually written
+	// against: `strict: true` and nothing beyond it. Adding the stricter family
+	// (noUncheckedIndexedAccess, exactOptionalPropertyTypes,
+	// noPropertyAccessFromIndexSignature, noUnusedLocals/Parameters,
+	// noImplicitReturns) was measured on this repo and produced 516 errors, of
+	// which 510 came from the new flags rather than from real defects.
+	//
+	// Tightening them is worthwhile but is its own piece of work, one flag at a
+	// time with the fallout fixed per flag. Turning them all on at once here
+	// would leave the gate permanently red and therefore ignored.
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"lib": ["ES2022"],
+		"types": ["node"],
+		"strict": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		// ppie-recover imports with explicit .ts extensions.
+		// scripts/check-circular.mjs relies on that same convention to recover
+		// the import graph without a compiler, so it is load-bearing.
+		"allowImportingTsExtensions": true,
+		"noEmit": true
+	},
+	"include": ["packages/*/**/*.ts", "vitest.config.ts"],
+	"exclude": ["**/node_modules/**", "**/dist/**", "**/.pi/**", "**/.pi-lens/**"]
+}

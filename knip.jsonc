@@ -1,0 +1,68 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+
+	// Root-owned dead-code detection. Entry points are declared per workspace
+	// because knip cannot infer them: a pi extension's real entry is its
+	// package.json pi.extensions value, and scripts/ holds standalone operator
+	// CLIs invoked through package scripts rather than imported.
+
+	// The per-workspace project globs below scope knip to src/, test/ and
+	// scripts/, so agent directories never enter its graph. Review worktrees are
+	// the one exception the globs cannot cover: they nest a full packages/ tree
+	// inside the repo, which matches those same globs and reports every checked
+	// out copy as a duplicate.
+	"ignore": ["**/.review/**"],
+
+	"workspaces": {
+		".": {
+			"entry": ["scripts/*.mjs"],
+			"ignoreBinaries": ["gdog"],
+			"project": ["scripts/**/*.mjs"]
+		},
+		"packages/ppie-recover": {
+			// recovery-matrix.ts is deliberately unreferenced: it is declarative input
+			// to the recovery-chain controller (PPMONO-3), specified but not yet built.
+			// Declared per file rather than ignoring src/diagnose/, so a genuinely
+			// orphaned module landing in that directory is still reported. It stays in
+			// the project set and is type-coupled to ErrorClass, so it cannot drift.
+			"entry": [
+				"src/retry.ts",
+				"scripts/*.ts",
+				"test/**/*.test.ts",
+				"test/**/*.spec.ts",
+				"src/diagnose/recovery-matrix.ts"
+			],
+			"project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
+		},
+		"packages/ppie-custom-provider": {
+			// test/api-coverage/ is a compile-time type canary, not dead code: it is
+			// never imported by anything, on purpose, so that an incompatible change
+			// to the pi types it names breaks `typecheck` instead of failing silently
+			// at runtime. It stays in the project set so it is still typechecked, and
+			// is declared as an entry so knip stops reporting it as unreferenced.
+			// reference/ holds code kept for reading, not shipping — it is outside the
+			// package's files[] array, so it reaches no consumer. It is listed in both
+			// entry and project so the directory stays *covered*: without the project
+			// glob knip would not look there at all, and a second module could rot in
+			// it unnoticed. Entry status is what keeps its known contents from being
+			// reported, per-file coverage is what keeps the directory honest.
+			"entry": [
+				"src/index.ts",
+				"test/**/*.test.ts",
+				"test/api-coverage/index.ts",
+				"reference/delegating-provider.ts",
+				// commands/misc/tools/ui demonstrate ExtensionAPI surfaces. They were
+				// registered in real sessions, which put 17 `ppie-custom-provider-*` entries
+				// in the command picker, spent context on 6 demo tools in every request,
+				// and claimed the global `ctrl+shift+g` binding away from pi's own
+				// `tui.altScreen.searchPrevious`. Reading material, like the rest of
+				// reference/.
+				"reference/commands.ts",
+				"reference/misc.ts",
+				"reference/tools.ts",
+				"reference/ui.ts"
+			],
+			"project": ["src/**/*.ts", "test/**/*.ts", "reference/**/*.ts"]
+		}
+	}
+}

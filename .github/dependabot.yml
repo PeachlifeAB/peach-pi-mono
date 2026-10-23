@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+
+  # Root holds every shared devDependency; the packages carry only their own
+  # runtime deps and peerDependencies. Grouped so a toolchain bump arrives as
+  # one reviewable PR rather than one per tool.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      # Held to match upstream pi, which these packages load into, so that the
+      # gate checks against the same type surface as the host. TypeScript 7
+      # additionally reshapes the ts.* exports ppie-recover's architecture test
+      # imports.
+      - dependency-name: typescript
+      - dependency-name: '@types/node'
+
+  - package-ecosystem: npm
+    directory: /packages/ppie-recover
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /packages/pi-omlx-picker
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /packages/ppie-custom-provider
+    schedule:
+      interval: weekly

@@ -1,0 +1,8 @@
+# Defaults for `act` (https://github.com/nektos/act), which runs the GitHub
+# Actions workflows locally in Docker. Without these, act on Apple Silicon
+# warns and can fail on actions that ship amd64-only binaries.
+--container-architecture linux/amd64
+
+# medium ships Node and the common build tooling. The default `micro` image
+# lacks too much for this workflow; `large` is ~17GB and buys nothing here.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest

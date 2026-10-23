@@ -1,0 +1,76 @@
+{
+	"$schema": "https://cdn.jsdelivr.net/npm/syncpack@15/config-schema.json",
+	"versionGroups": [
+		{
+			"label": "Internal monorepo packages must use workspace:*",
+			"packages": [
+				"**"
+			],
+			"dependencies": [
+				"@peachlife/*"
+			],
+			"dependencyTypes": [
+				"dev",
+				"prod"
+			],
+			"pinVersion": "workspace:*"
+		},
+		{
+			"label": "Pi agent packages are supplied by the host process, never bundled",
+			"packages": [
+				"**"
+			],
+			"dependencies": [
+				"@earendil-works/pi-*",
+				"@mariozechner/pi-*"
+			],
+			"dependencyTypes": [
+				"peer"
+			],
+			"pinVersion": "*"
+		},
+		{
+			"label": "Shared tooling resolves through the pnpm workspace catalog",
+			"packages": [
+				"**"
+			],
+			"dependencies": [
+				"@biomejs/biome",
+				"@types/node",
+				"@vitest/coverage-v8",
+				"c8",
+				"dependency-cruiser",
+				"husky",
+				"knip",
+				"tsx",
+				"typescript",
+				"vitest"
+			],
+			"dependencyTypes": [
+				"dev"
+			],
+			"pinVersion": "catalog:"
+		}
+	],
+	"sortAz": [
+		"dependencies",
+		"devDependencies",
+		"peerDependencies",
+		"scripts",
+		"keywords",
+		"files"
+	],
+	"sortFirst": [
+		"name",
+		"version",
+		"description",
+		"license",
+		"private",
+		"type",
+		"main",
+		"types",
+		"files",
+		"pi",
+		"scripts"
+	]
+}

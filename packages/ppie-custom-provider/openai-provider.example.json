@@ -1,0 +1,13 @@
+{
+	"baseUrl": "http://localhost:1234/v1",
+	"discovery": {
+		"enabled": true,
+		"path": "/models"
+	},
+	"overflowPattern": "",
+	"compat": {},
+	"log": {
+		"enabled": false,
+		"maxBytes": 5242880
+	}
+}

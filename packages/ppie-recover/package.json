@@ -1,0 +1,66 @@
+{
+	"name": "@peachlife/ppie-recover",
+	"version": "0.1.0",
+	"description": "Public pi extension that retries empty-detail provider errors and stalled streams.",
+	"type": "module",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/PeachlifeAB/peach-pi-mono.git",
+		"directory": "packages/ppie-recover"
+	},
+	"homepage": "https://github.com/PeachlifeAB/peach-pi-mono/tree/main/packages/ppie-recover#readme",
+	"bugs": {
+		"url": "https://github.com/PeachlifeAB/peach-pi-mono/issues"
+	},
+	"private": false,
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi",
+		"retry"
+	],
+	"files": [
+		"src",
+		"schemas",
+		"config.default.json",
+		"README.md",
+		"LICENSE"
+	],
+	"pi": {
+		"extensions": [
+			"./src/retry.ts"
+		]
+	},
+	"scripts": {
+		"trace": "bash .dog/trace.sh",
+		"trace:once": "bash .dog/trace.sh --once",
+		"test:node": "node --import tsx --import ./test/hermetic-home-node.ts --test test/**/*.test.ts",
+		"test:real-interface": "vitest run -c vitest.config.ts",
+		"test": "pnpm run test:node; r1=$?; pnpm run test:real-interface; r2=$?; exit $((r1 || r2))",
+		"test:coverage": "c8 --all --include='src/**/*.ts' --reporter=text --reporter=lcov --reporter=json --reports-dir=coverage --lines 84 --functions 86 --branches 76 --statements 84 pnpm test",
+		"schema:check": "pnpm run gen:schema && git diff --exit-code -- schemas config.default.json",
+		"smoke:real-settings-compaction": "bash scripts/smoke-real-settings-compaction.sh",
+		"diagnose": "node --import tsx scripts/diagnose-session.ts",
+		"quick-diagnose": "python3 scripts/quick-error-filter.py",
+		"release": "npm publish --access public",
+		"docs:graph": "node ../../scripts/gen-dependency-graph.mjs --out docs/dependency-graph.md src",
+		"gen:schema": "node --import tsx scripts/gen-retry-config-schema.ts && node --import tsx scripts/gen-smoke-config-schema.ts",
+		"prepublishOnly": "pnpm test && pnpm schema:check"
+	},
+	"dependencies": {
+		"zod": "^4.6.7"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-agent-core": "*",
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-agent-core": "^1.4.0",
+		"@earendil-works/pi-ai": "^1.4.0",
+		"@earendil-works/pi-coding-agent": "^1.4.0",
+		"ajv": "^8.20.0",
+		"vitest": "catalog:"
+	}
+}

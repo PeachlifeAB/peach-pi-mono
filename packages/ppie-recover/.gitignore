@@ -1,0 +1,24 @@
+/node_modules
+/dist
+/coverage
+.jscpd-report/
+# Runtime output droppings. Some tool run from this cwd (NOT this repo's own
+# `npm run test:node` / `test:real-interface` — verified they don't create it)
+# writes cost-events-*/events-*-* dirs under ./tests/output. Never source,
+# never git-tracked. Ignore the tree so nothing can pollute git. Real tests
+# live in ./test/ (singular).
+/tests/
+/log/
+# Local Pi runtime state
+.atl/
+
+# Local live smoke target config. Sole source of launch facts; never
+# checked in, never read by tests. See scripts/smoke-real-settings-compaction.sh.
+.pi-retry-smoke.local.json
+**/.pi-retry-smoke.local.json
+/AGENTS.override.md
+/CLAUDE.local.md
+/.dog
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/

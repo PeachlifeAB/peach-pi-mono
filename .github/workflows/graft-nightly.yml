@@ -1,0 +1,66 @@
+name: graft version compatibility check
+
+on:
+  schedule:
+    - cron: "0 0 * * 2"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "graft ref to test against (branch, tag, or commit)"
+        default: main
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  upstream:
+    name: ppie-graft against graft ${{ inputs.ref || 'main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install graft from upstream
+        id: install
+        env:
+          GRAFT_REF: ${{ inputs.ref || 'main' }}
+        run: |
+          git init /tmp/graft
+          cd /tmp/graft
+          git remote add origin https://github.com/trailhq/Graft.git
+          git fetch --depth 1 origin "$GRAFT_REF"
+          git checkout FETCH_HEAD
+          npm install
+          npm link
+
+      - name: Report the graft under test
+        run: |
+          echo "commit: $(git -C /tmp/graft rev-parse HEAD)"
+          echo "version: $(graft --version)"
+
+      - name: Run the ppie-graft suite
+        id: suite
+        run: pnpm --filter @peachlife/ppie-graft test
+
+      - name: Report failure
+        if: failure()
+        env:
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+        run: |
+          if [ "$INSTALL_OUTCOME" = "failure" ]; then
+            echo "::error::graft did not install or build from upstream — its build, not our tests"
+          else
+            echo "::error::ppie-graft's own suite failed against upstream graft — our contract with it moved"
+          fi

@@ -1,0 +1,199 @@
+{
+  "$schema": "./config.schema.json",
+  "retry": {
+    "max_attempts": 5,
+    "seconds_before_first_retry": 16,
+    "multiplier_between_attempts": 2,
+    "max_seconds_between_attempts": 1000,
+    "smart_overrides": [
+      {
+        "when": {
+          "error_codes": [
+            500,
+            502,
+            503,
+            504,
+            524,
+            529
+          ],
+          "words": [
+            "terminated",
+            "fetch failed",
+            "socket hang up",
+            "socket connection was closed",
+            "other side closed",
+            "upstream connect",
+            "reset before headers",
+            "network error",
+            "connection error",
+            "connection refused",
+            "connection reset",
+            "connection lost",
+            "timed out",
+            "timeout",
+            "websocket closed",
+            "websocket error",
+            "stream ended",
+            "ended without",
+            "econnrefused",
+            "econnreset",
+            "etimedout",
+            "enotfound",
+            "eai_again",
+            "getaddrinfo",
+            "service unavailable",
+            "overloaded",
+            "server error",
+            "internal error",
+            "provider returned error"
+          ],
+          "words_match": "any"
+        },
+        "max_attempts": "unlimited"
+      },
+      {
+        "when": {
+          "error_codes": [
+            401,
+            402,
+            403,
+            429
+          ],
+          "words": [
+            "forbidden",
+            "payment required",
+            "insufficient_quota",
+            "credits",
+            "credit balance",
+            "billing",
+            "spending limit",
+            "access denied",
+            "rate_limit",
+            "rate limit",
+            "too many requests"
+          ],
+          "words_match": "any"
+        },
+        "max_attempts": 0
+      },
+      {
+        "when": {
+          "error_codes": [
+            404
+          ],
+          "words": [
+            "invalid api key",
+            "invalid authentication",
+            "api key not found",
+            "missing api key",
+            "authentication verification keys",
+            "unauthorized",
+            "usage limit",
+            "model not found",
+            "no such model",
+            "model does not exist",
+            "unsupported model",
+            "unsupported parameter",
+            "unsupported_value",
+            "invalid_argument",
+            "malformed",
+            "does not support",
+            "permission denied",
+            "account is not active",
+            "operation aborted",
+            "aborted by user",
+            "user aborted",
+            "request aborted"
+          ],
+          "words_match": "any"
+        },
+        "max_attempts": 0
+      },
+      {
+        "when": {
+          "words": [
+            "overflow",
+            "too long",
+            "context length"
+          ],
+          "words_match": "any"
+        },
+        "seconds_before_first_retry": 5,
+        "max_attempts": 3
+      },
+      {
+        "when": {
+          "words": [
+            "physical cap",
+            "prefill_memory_exceeded",
+            "memory limit exceeded",
+            "out of memory"
+          ],
+          "words_match": "any"
+        },
+        "seconds_before_first_retry": 30,
+        "multiplier_between_attempts": 2,
+        "max_attempts": 3
+      },
+      {
+        "when": {
+          "error_codes": [
+            409
+          ],
+          "words": [
+            "unload is pending"
+          ],
+          "words_match": "any"
+        },
+        "max_attempts": 0
+      }
+    ]
+  },
+  "memory_overflow_protection": {
+    "compaction": {
+      "enabled": true,
+      "dynamic": {
+        "enabled": false,
+        "at_context_ratio": 0.8
+      },
+      "forced": {
+        "enabled": true,
+        "wait_seconds_before_first_attempt": 30,
+        "max_attempts": 2,
+        "warn_after_seconds": 600,
+        "give_up_after_no_progress_seconds": 180,
+        "give_up_confirm_seconds": 480
+      }
+    },
+    "prune": {
+      "enabled": false,
+      "max_attempts": 1,
+      "removal_fractions": [
+        0.25,
+        0.5,
+        0.75,
+        0.875
+      ],
+      "target_priorities": {
+        "marked_blocks": 3,
+        "tool_results": 2,
+        "assistant_turns": 1
+      },
+      "tool_priorities": {},
+      "block_markers": [
+        "llm wiki",
+        "wiki",
+        "recall"
+      ],
+      "extra_overage_tokens": 2000
+    }
+  },
+  "model_fallback": {
+    "enabled": false,
+    "max_hops": 3
+  },
+  "warnings": {
+    "provider_silence_seconds": 600
+  },
+  "debug": false
+}

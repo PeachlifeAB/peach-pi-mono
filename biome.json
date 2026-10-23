@@ -1,0 +1,57 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"style": {
+				"noNonNullAssertion": "off",
+				"useConst": "error",
+				"useNodejsImportProtocol": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noControlCharactersInRegex": "off",
+				"noEmptyInterface": "off"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 3,
+		"lineWidth": 120
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"files": {
+		"includes": [
+			"packages/**/*.ts",
+			"scripts/**/*.mjs",
+			"vitest.config.ts",
+			"!**/node_modules/**/*",
+			"!**/.stryker-tmp/**/*",
+			"!**/schemas/*.json",
+			"!**/dist/**/*",
+			"!unowned/**/*",
+			"!wip/**/*",
+			"!**/.review/**/*",
+			"!**/.claude/**/*",
+			"!**/.codex/**/*",
+			"!**/.gemini/**/*",
+			"!**/.agents/**/*",
+			"!**/.gdog/**/*",
+			"!**/.dog/**/*",
+			"!**/.pi/**/*",
+			"!**/.pi-lens/**/*",
+			"!**/.remember/**/*"
+		]
+	}
+}

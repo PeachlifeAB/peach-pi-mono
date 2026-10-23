@@ -1,0 +1,76 @@
+node_modules/
+dist/
+**/coverage/
+.stryker-tmp/
+**/reports/
+.gdog/
+*.log
+# Rotated provider logs (see examples/.../src/logging.ts) — `*.log` misses these.
+*.log.[0-9]*
+# Captured server output used as test input, not run artifacts. Without this
+# the blanket *.log rule excludes them and their tests fail on a fresh clone.
+!**/test/fixtures/*.log
+.DS_Store
+unowned/
+
+# pi's per-project config dir. Provider wire logs land here and contain full
+# request payloads and message content, so it must never be committed.
+.pi/
+/.rpiv
+# pi-lens run state: cached analysis plus saved session transcripts that embed
+# absolute local paths. Regenerated on demand, ~15MB, never a build input.
+.pi-lens/
+
+/.claude
+/.omt
+/unowned
+/deprecated-extensions
+# Real smoke fixtures carry live session ids and consumer paths from
+# reported regressions. The .example.json sibling files are templates and
+# are intended to be checked in. These patterns are recursive: fixtures live
+# in per-package directories (packages/*/test/fixtures/), which the previous
+# root-anchored `/test/fixtures/*.json` never matched — a live fixture there
+# was committable. Mirrors the recursive `!**/test/fixtures/*.log` above.
+# Both test/ and tests/ are covered: fixtures exist under each spelling.
+**/test/fixtures/*.json
+!**/test/fixtures/*.example.json
+**/tests/fixtures/*.json
+!**/tests/fixtures/*.example.json
+
+# Per-consumer git worktrees the smoke launcher creates. Each path under
+# .ppie-recover/consuming-project/ is a fresh worktree of a real consumer
+# project (omt-workspace, /Users/davidaberg/.config/zsh, etc.) and stays
+# fully local.
+/.ppie-recover/consuming-project/
+
+/.dog
+/CLAUDE.local.md
+/.mcp.json
+
+# loose exploration data, per CLAUDE.md
+scratchpad/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
+/.gemini
+/.beads
+/CONTEXT.md
+/docs/adr
+/.harness-hash
+/.husky
+/.qlty
+/AGENTS.md
+/CLAUDE.md
+/packages/ppie-recover/docs/smoke-testing.md
+/docs/specs
+/features
+/openspec
+/packages/ppie-recover/docs
+/packages/ppie-recover/test/fixtures
