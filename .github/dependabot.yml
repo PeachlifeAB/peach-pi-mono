@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 2
     groups:
       github-actions:
         patterns:
@@ -16,28 +18,33 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 2
     groups:
       dev-dependencies:
         dependency-type: development
     ignore:
-      # Held to match upstream pi, which these packages load into, so that the
-      # gate checks against the same type surface as the host. TypeScript 7
-      # additionally reshapes the ts.* exports ppie-recover's architecture test
+      # TypeScript 7 reshapes the ts.* exports ppie-recover's architecture test
       # imports.
       - dependency-name: typescript
-      - dependency-name: '@types/node'
 
   - package-ecosystem: npm
     directory: /packages/ppie-recover
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 2
 
   - package-ecosystem: npm
-    directory: /packages/pi-omlx-picker
+    directory: /packages/ppie-graft
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 2
 
   - package-ecosystem: npm
     directory: /packages/ppie-custom-provider
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 2

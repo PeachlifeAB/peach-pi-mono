@@ -1,0 +1,4 @@
+# graft/ is a regenerable local cache that no scanner may walk (scripts/check-globs.mjs);
+# without this, `graft build` writes a root .ignore that re-admits it to ripgrep.
+[env]
+GRAFT_NO_IGNORE = "1"

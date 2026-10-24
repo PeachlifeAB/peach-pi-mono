@@ -38,8 +38,8 @@
 			// test/api-coverage/ is a compile-time type canary, not dead code: it is
 			// never imported by anything, on purpose, so that an incompatible change
 			// to the pi types it names breaks `typecheck` instead of failing silently
-			// at runtime. It stays in the project set so it is still typechecked, and
-			// is declared as an entry so knip stops reporting it as unreferenced.
+			// at runtime. It stays in the project set so it is still typechecked; knip
+			// already treats it as an entry, so it needs no entry pattern.
 			// reference/ holds code kept for reading, not shipping — it is outside the
 			// package's files[] array, so it reaches no consumer. It is listed in both
 			// entry and project so the directory stays *covered*: without the project
@@ -49,7 +49,6 @@
 			"entry": [
 				"src/index.ts",
 				"test/**/*.test.ts",
-				"test/api-coverage/index.ts",
 				"reference/delegating-provider.ts",
 				// commands/misc/tools/ui demonstrate ExtensionAPI surfaces. They were
 				// registered in real sessions, which put 17 `ppie-custom-provider-*` entries

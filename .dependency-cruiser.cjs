@@ -118,9 +118,9 @@ module.exports = {
 			from: {},
 			to: {
 				moreThanOneDependencyType: true,
-				// as it's common to use a devDependency for type-only imports: don't
-				// consider type-only dependencyTypes for this rule
-				dependencyTypesNot: ["type-only"],
+				// a devDependency for type-only imports and a devDependency paired with
+				// a peerDependency (Pi supplies the package at runtime) are intentional
+				dependencyTypesNot: ["type-only", "npm-peer"],
 			},
 		},
 
@@ -168,7 +168,7 @@ module.exports = {
 				dependencyTypes: ["npm-dev"],
 				// type only dependencies are not a problem as they don't end up in the
 				// production code or are ignored by the runtime.
-				dependencyTypesNot: ["type-only"],
+				dependencyTypesNot: ["type-only", "npm-peer"],
 				// Pi packages are peer dependencies supplied by the host; they are dev dependencies only so tests run against the latest pi.
 				pathNot: ["node_modules/@types/", "node_modules/@earendil-works/pi-"],
 			},
