@@ -4,6 +4,7 @@ dist/
 .stryker-tmp/
 **/reports/
 .gdog
+/.repo.yaml
 *.log
 # Rotated provider logs (see examples/.../src/logging.ts) — `*.log` misses these.
 *.log.[0-9]*
@@ -50,8 +51,7 @@ unowned/
 # loose exploration data, per CLAUDE.md
 scratchpad/
 
-# graft's local graph cache — regenerable, not committed (run `graft build`).
-/graft/
+!packages/ppie-graft
 
 # Beads / Dolt files (added by bd init)
 .dolt/

@@ -103,6 +103,19 @@ Off by default, because provider payloads contain prompt content. Enable per-run
 `pi --ppie-custom-provider-log` or persistently with `log.enabled`. Output goes to
 `.pi/provider-payload.log` with credential headers and prompt-bearing fields redacted.
 
+## FAQ
+
+### `Error: terminated` on long prompts
+
+A reverse proxy can close the connection while the server is still prefilling and sends no bytes. The server then aborts the request.
+
+Fix: raise the proxy's idle limit for this route.
+
+- Caddy: `servers { timeouts { read_body_idle <duration> } }` in global options.
+- nginx: `proxy_read_timeout` and `proxy_send_timeout`.
+
+Other proxies and tunnels have equivalent idle settings.
+
 ## Reference material
 
 `src/examples/api-coverage.ts` and `src/delegating-provider.ts` are unregistered. They

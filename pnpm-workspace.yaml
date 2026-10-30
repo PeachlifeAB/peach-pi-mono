@@ -1,10 +1,22 @@
 minimumReleaseAge: 2880
 # First-party upstream (the host these extensions extend) is tracked at latest
 # on purpose: extensions must run against the current Pi release, not a stale
-# pin. The 2-day maturity gate still applies to everything else.
+# pin. All remaining releases retain the 2-day maturity gate.
 minimumReleaseAgeExclude:
   - "@earendil-works/pi-*"
   - "@mariozechner/pi-*"
+  - "@biomejs/biome@2.6.4"
+  - "@biomejs/cli-linux-x64@2.6.4"
+  - "@biomejs/cli-win32-x64@2.6.4"
+  - "@biomejs/cli-darwin-x64@2.6.4"
+  - "@biomejs/cli-android-x64@2.6.4"
+  - "@biomejs/cli-linux-arm64@2.6.4"
+  - "@biomejs/cli-win32-arm64@2.6.4"
+  - "@biomejs/cli-darwin-arm64@2.6.4"
+  - "@biomejs/cli-android-arm64@2.6.4"
+  - "@biomejs/cli-linux-x64-musl@2.6.4"
+  - "@biomejs/cli-linux-arm64-musl@2.6.4"
+  - "knip@6.44.0"
 
 # Transitive-only pins for advisories with no direct dependency to bump:
 # brace-expansion reaches us through minimatch, nanoid through postcss,
@@ -31,12 +43,12 @@ packageExtensions:
 
 catalog:
   # Shared Core & Build Tools
-  "@biomejs/biome": "2.6.2"
-  "@types/node": "26.6.5"
+  "@biomejs/biome": 2.6.4
+  "@types/node": 26.6.6
   "typescript": "7.0.2"
   "vitest": "5.0.5"
   "@vitest/coverage-v8": "5.0.5"
-  "knip": "6.42.1"
+  "knip": 6.44.0
   "dependency-cruiser": "18.7.0"
   "c8": "12.0.0"
   "tsx": "4.23.15"
