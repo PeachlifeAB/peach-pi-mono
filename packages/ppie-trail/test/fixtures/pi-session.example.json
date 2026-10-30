@@ -1,0 +1,55 @@
+{
+  "sessionId": "pi-native-fixture",
+  "cwd": "/sandbox/project",
+  "leafId": "compact",
+  "entries": [
+    {
+      "type": "custom", "id": "receipt", "parentId": null,
+      "timestamp": "2026-10-30T21:00:00.000Z",
+      "customType": "ppie-trail-input",
+      "data": {
+        "source": "interactive",
+        "textSha": "caedf2c0a1b485cb0ba3b135056262a3bce5d8b63510726dc9977b09b1fda648"
+      }
+    },
+    {
+      "type": "message", "id": "human", "parentId": "receipt",
+      "timestamp": "2026-10-30T21:00:01.000Z",
+      "message": { "role": "user", "content": "Fix the failing test" }
+    },
+    {
+      "type": "message", "id": "call", "parentId": "human",
+      "timestamp": "2026-10-30T21:00:02.000Z",
+      "message": {
+        "role": "assistant",
+        "content": [{ "type": "toolCall", "id": "bash-1", "name": "bash", "arguments": { "command": "pnpm test" } }]
+      }
+    },
+    {
+      "type": "message", "id": "result", "parentId": "call",
+      "timestamp": "2026-10-30T21:00:03.000Z",
+      "message": {
+        "role": "toolResult", "toolCallId": "bash-1", "toolName": "bash", "isError": true,
+        "content": [{ "type": "text", "text": "Fixture test failed" }]
+      }
+    },
+    {
+      "type": "message", "id": "injected", "parentId": "result",
+      "timestamp": "2026-10-30T21:00:04.000Z",
+      "message": { "role": "user", "content": "Fix the failing test" }
+    },
+    {
+      "type": "message", "id": "other-branch", "parentId": "human",
+      "timestamp": "2026-10-30T21:00:05.000Z",
+      "message": {
+        "role": "assistant",
+        "content": [{ "type": "toolCall", "id": "off-branch-call", "name": "bash", "arguments": { "command": "git push" } }]
+      }
+    },
+    {
+      "type": "compaction", "id": "compact", "parentId": "injected",
+      "timestamp": "2026-10-30T21:00:06.000Z",
+      "summary": "Fixture compaction", "firstKeptEntryId": "human", "tokensBefore": 100
+    }
+  ]
+}

@@ -8,7 +8,7 @@ const made: string[] = [];
 
 /** A repo directory, optionally carrying a wiring graph with counts in `meta`. */
 function repo(counts?: { nodeCount: number; edgeCount: number }) {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-bar-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-bar-"));
 	made.push(dir);
 	// Build lifecycle tests model real repos, and the session gate only builds
 	// inside one — a bare temp dir would now be skipped as a scratch folder.
@@ -17,28 +17,28 @@ function repo(counts?: { nodeCount: number; edgeCount: number }) {
 	return dir;
 }
 
-function graftInstall(version: string) {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-version-"));
+function trailInstall(version: string) {
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-version-"));
 	made.push(root);
 	fs.writeFileSync(
 		path.join(root, "package.json"),
-		JSON.stringify({ name: "@nanonets/graft", type: "module", version }),
+		JSON.stringify({ name: "@trailhq/trail-code", type: "module", version }),
 	);
 	const dist = path.join(root, "dist");
 	fs.mkdirSync(path.join(dist, "claude"), { recursive: true });
 	fs.writeFileSync(path.join(dist, "cli.js"), "#!/usr/bin/env node\n");
 	fs.writeFileSync(path.join(dist, "claude", "format.js"), "export const marker = 1;\n");
-	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-bin-"));
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-bin-"));
 	made.push(binDir);
-	const binary = path.join(binDir, "graft");
+	const binary = path.join(binDir, "trail");
 	fs.symlinkSync(path.join(dist, "cli.js"), binary);
 	return { root, binary };
 }
 
 function writeGraph(dir: string, meta: unknown) {
-	const graph = path.join(dir, "graft", ".graph");
+	const graph = path.join(dir, ".trail", "cache", ".graph");
 	fs.mkdirSync(graph, { recursive: true });
-	// meta first, as graft writes it — the reader takes a prefix, not the file.
+	// meta first, as trail writes it — the reader takes a prefix, not the file.
 	fs.writeFileSync(path.join(graph, "wiring.json"), JSON.stringify({ meta, nodes: [], edges: [] }));
 }
 
@@ -139,7 +139,7 @@ describe("status footer", () => {
 		const harness = createHarness({ cwd: repo({ nodeCount: 38, edgeCount: 47 }) });
 		await harness.emit("session_start");
 		await harness.emit("tool_result", {
-			content: [{ type: "text", text: "[graft] tokens saved ≈ 54,452 (96%)" }],
+			content: [{ type: "text", text: "[trail] tokens saved ≈ 54,452 (96%)" }],
 		});
 		expect(footer(harness)).toContain("38 nodes");
 		expect(footer(harness)).toContain("54k");
@@ -147,41 +147,41 @@ describe("status footer", () => {
 
 	it("survives a graph whose counts cannot be read", async () => {
 		const dir = repo();
-		const graph = path.join(dir, "graft", ".graph");
+		const graph = path.join(dir, ".trail", "cache", ".graph");
 		fs.mkdirSync(graph, { recursive: true });
 		fs.writeFileSync(path.join(graph, "wiring.json"), "not json at all");
 		const harness = createHarness({ cwd: dir });
 		await harness.emit("session_start");
 		// The artifact exists, so not "indexing"; the counts are simply absent.
-		expect(footer(harness)).toContain("graft");
+		expect(footer(harness)).toContain("trail");
 		expect(footer(harness)).not.toContain("indexing");
 	});
 
 	it("reports formatter/binary skew and reads the binary version once", async () => {
-		const older = graftInstall("0.16.0");
-		const newer = graftInstall("0.17.0");
+		const older = trailInstall("0.16.0");
+		const newer = trailInstall("0.17.0");
 		const harness = createHarness({
 			cwd: repo({ nodeCount: 1, edgeCount: 1 }),
 			exec: (command, args) => {
 				if (command === "which") return { stdout: `${older.binary}\n${newer.binary}\n` };
-				if (command === "graft" && args[0] === "--version") return { stdout: "graft 0.16.0\n" };
+				if (command === "trail" && args[0] === "--version") return { stdout: "trail 0.16.0\n" };
 				return { stdout: "" };
 			},
 		});
 		await harness.emit("session_start");
-		await harness.emit("tool_result", { content: [{ type: "text", text: "[graft] tokens saved ≈ 5" }] });
+		await harness.emit("tool_result", { content: [{ type: "text", text: "[trail] tokens saved ≈ 5" }] });
 		expect(footer(harness)).toContain("formatter 0.17.0 / binary 0.16.0");
-		expect(harness.calls.filter((call) => call.command === "graft" && call.args[0] === "--version")).toHaveLength(1);
+		expect(harness.calls.filter((call) => call.command === "trail" && call.args[0] === "--version")).toHaveLength(1);
 	});
 
 	it("stays silent for matching or unreadable versions", async () => {
-		for (const binaryOutput of ["graft 0.17.0\n", "not a version\n"]) {
-			const install = graftInstall("0.17.0");
+		for (const binaryOutput of ["trail 0.17.0\n", "not a version\n"]) {
+			const install = trailInstall("0.17.0");
 			const harness = createHarness({
 				cwd: repo({ nodeCount: 1, edgeCount: 1 }),
 				exec: (command) => {
 					if (command === "which") return { stdout: `${install.binary}\n` };
-					if (command === "graft") return { stdout: binaryOutput };
+					if (command === "trail") return { stdout: binaryOutput };
 					return { stdout: "" };
 				},
 			});

@@ -1,0 +1,117 @@
+{
+	"learning": "---\ntitle: Preserve integer values\nauthor: Fixture\ndate: 2026-10-30\ntouches:\n  - src/target.ts\n---\n\n## Decided\nKeep values as integers.\n",
+	"source": "export const value = 1;\n",
+	"unsafeInput": {
+		"cwd": ".",
+		"session_id": "pi-unsafe",
+		"transcript_path": "/sandbox/not-a-claude-session.jsonl"
+	},
+	"responses": [
+		{
+			"title": "context",
+			"reply": {
+				"hookSpecificOutput": {
+					"additionalContext": "learning"
+				}
+			},
+			"expected": {
+				"context": "learning"
+			}
+		},
+		{
+			"title": "notice",
+			"reply": {
+				"systemMessage": "notice"
+			},
+			"expected": {
+				"notice": "notice"
+			}
+		},
+		{
+			"title": "command denial",
+			"reply": {
+				"hookSpecificOutput": {
+					"permissionDecision": "deny",
+					"permissionDecisionReason": "blocked command"
+				}
+			},
+			"expected": {
+				"block": "blocked command"
+			}
+		},
+		{
+			"title": "approval request",
+			"reply": {
+				"hookSpecificOutput": {
+					"permissionDecision": "ask",
+					"permissionDecisionReason": "confirm command"
+				}
+			},
+			"expected": {
+				"block": "confirm command"
+			}
+		},
+		{
+			"title": "explicit allowance",
+			"reply": {
+				"hookSpecificOutput": {
+					"permissionDecision": "allow",
+					"permissionDecisionReason": "allowed command"
+				}
+			},
+			"expected": {}
+		},
+		{
+			"title": "stop denial",
+			"reply": {
+				"decision": "block",
+				"reason": "required step"
+			},
+			"expected": {
+				"block": "required step"
+			}
+		},
+		{
+			"title": "missing denial reason",
+			"reply": {
+				"decision": "block"
+			},
+			"expected": {
+				"block": "Trail requires approval."
+			}
+		},
+		{
+			"title": "empty denial reason",
+			"reply": {
+				"decision": "block",
+				"reason": ""
+			},
+			"expected": {
+				"block": "Trail requires approval."
+			}
+		},
+		{
+			"title": "empty permission reason",
+			"reply": {
+				"hookSpecificOutput": {
+					"permissionDecision": "deny",
+					"permissionDecisionReason": ""
+				}
+			},
+			"expected": {
+				"block": "Trail requires approval."
+			}
+		},
+		{
+			"title": "missing permission reason",
+			"reply": {
+				"hookSpecificOutput": {
+					"permissionDecision": "deny"
+				}
+			},
+			"expected": {
+				"block": "Trail requires approval."
+			}
+		}
+	]
+}

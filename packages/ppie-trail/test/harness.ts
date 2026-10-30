@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
+import type { HookRunner } from "../src/hook-process.ts";
 import register from "../src/index.ts";
 
 /**
- * Answers `which graft` for real, leaving every other command stubbed. Tests
- * that need graft's own format.js loaded pass this; the rest keep exec inert.
+ * Answers `which trail` for real, leaving every other command stubbed. Tests
+ * that need trail's own format.js loaded pass this; the rest keep exec inert.
  */
 export function realWhich(command: string, args: string[]) {
 	if (command !== "which") return { stdout: "", stderr: "", code: 0, killed: false };
@@ -31,6 +32,7 @@ interface SpawnCall {
 }
 
 interface HarnessOptions {
+	hooks?: HookRunner;
 	/** The session directory handlers see. Defaults to the process cwd. */
 	cwd?: string;
 	exec?: (command: string, args: string[]) => unknown;
@@ -48,10 +50,12 @@ export function createHarness(options: HarnessOptions = {}) {
 	const spawns: SpawnCall[] = [];
 	const status: (string | undefined)[] = [];
 	const notices: string[] = [];
+	const messages: { message: unknown; options: unknown }[] = [];
 	let tool: any;
 	let command: any;
 
 	const pi = {
+		sendMessage: (message: unknown, options: unknown) => messages.push({ message, options }),
 		on: (event: string, handler: any) => handlers.set(event, handler),
 		registerTool: (definition: any) => {
 			tool = definition;
@@ -77,9 +81,11 @@ export function createHarness(options: HarnessOptions = {}) {
 			};
 		},
 	};
-	register(pi);
+	register(pi, { hooks: () => options.hooks, formatRoots: [] });
 
 	const ctx = {
+		sessionManager: { getSessionId: () => "pi-harness" },
+		getContextUsage: () => undefined,
 		cwd: options.cwd ?? process.cwd(),
 		ui: {
 			setStatus: (_key: string, text: string | undefined) => status.push(text),
@@ -92,6 +98,7 @@ export function createHarness(options: HarnessOptions = {}) {
 		spawns,
 		status,
 		notices,
+		messages,
 		get tool() {
 			return tool;
 		},

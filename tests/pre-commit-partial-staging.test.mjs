@@ -27,7 +27,15 @@ test("a commit preserves the selected index and leaves unrelated hunks unstaged"
 			`} else { process.exit(4); }\n`,
 	);
 	chmodSync(pnpm, 0o755);
-	const environment = { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH}` };
+	const parentIndex = join(fixture, "parent.index");
+	copyFileSync(
+		execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-path", "index"], { cwd: repository, encoding: "utf8" }).trim(),
+		parentIndex,
+	);
+	const environment = { ...process.env, GIT_INDEX_FILE: parentIndex, PATH: `${bin}${delimiter}${process.env.PATH}` };
+	for (const variable of execFileSync("git", ["rev-parse", "--local-env-vars"], { encoding: "utf8" }).trim().split("\n")) {
+		delete environment[variable];
+	}
 	const git = (...args) =>
 		execFileSync("git", args, { cwd: fixture, env: environment, encoding: "utf8", stdio: "pipe" });
 	git("init", "-q");

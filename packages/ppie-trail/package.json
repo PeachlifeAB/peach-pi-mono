@@ -1,14 +1,14 @@
 {
-	"name": "@peachlife/ppie-graft",
+	"name": "@peachlife/ppie-trail",
 	"version": "0.1.0",
-	"description": "pi extension exposing the graft codebase graph as a tool, with per-session orientation and token-savings tracking",
+	"description": "pi extension exposing the trail codebase graph as a tool, with per-session orientation and token-savings tracking",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/PeachlifeAB/peach-pi-mono.git",
-		"directory": "packages/ppie-graft"
+		"directory": "packages/ppie-trail"
 	},
-	"homepage": "https://github.com/PeachlifeAB/peach-pi-mono/tree/main/packages/ppie-graft#readme",
+	"homepage": "https://github.com/PeachlifeAB/peach-pi-mono/tree/main/packages/ppie-trail#readme",
 	"bugs": {
 		"url": "https://github.com/PeachlifeAB/peach-pi-mono/issues"
 	},
@@ -16,7 +16,7 @@
 		"pi-package",
 		"pi-extension",
 		"pi",
-		"graft"
+		"trail"
 	],
 	"type": "module",
 	"files": [
@@ -31,7 +31,7 @@
 			"./src/index.ts"
 		],
 		"skills": [
-			"./skills/graft/SKILL.md"
+			"./skills/trail/SKILL.md"
 		]
 	},
 	"scripts": {
@@ -39,5 +39,11 @@
 		"test:coverage": "vitest run -c vitest.config.ts --coverage",
 		"release": "npm publish --access public",
 		"prepublishOnly": "pnpm test"
+	},
+	"dependencies": {
+		"ajv": "^8.20.0"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "^1.4.0"
 	}
 }

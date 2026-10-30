@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["host", "tier", "learn", "sessionId", "leafId", "toolCalls", "failedCount", "compactions"],
+  "additionalProperties": false,
+  "properties": {
+    "host": { "const": "pi" },
+    "tier": { "const": "D" },
+    "learn": { "const": false },
+    "sessionId": { "type": "string", "minLength": 1 },
+    "leafId": { "type": ["string", "null"] },
+    "toolCalls": { "type": "integer", "minimum": 0 },
+    "failedCount": { "type": "integer", "minimum": 0 },
+    "compactions": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": { "compatibleVersion": { "enum": ["0.28.0"] } }
+}

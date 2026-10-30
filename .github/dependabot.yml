@@ -36,7 +36,7 @@ updates:
       default-days: 2
 
   - package-ecosystem: npm
-    directory: /packages/ppie-graft
+    directory: /packages/ppie-trail
     schedule:
       interval: weekly
     cooldown:

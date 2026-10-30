@@ -16,7 +16,7 @@ describe("declared pi resources", () => {
 
 	it("declares the extension and its skill", () => {
 		expect(manifest.pi.extensions).toContain("./src/index.ts");
-		expect(manifest.pi.skills).toContain("./skills/graft/SKILL.md");
+		expect(manifest.pi.skills).toContain("./skills/trail/SKILL.md");
 	});
 
 	it.each(declared)("%s entry %s exists on disk", (_type, declaredPath) => {

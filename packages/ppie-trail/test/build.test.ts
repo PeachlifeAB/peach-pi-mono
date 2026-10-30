@@ -7,16 +7,16 @@ import { createHarness } from "./harness.ts";
 const made: string[] = [];
 
 /**
- * A repo directory, optionally carrying a graft graph. The artifacts are the
- * ones upstream's `hasGraftIndex` tests (graph/root.ts:23): a built repo's
+ * A repo directory, optionally carrying a trail graph. The artifacts are the
+ * ones upstream's `hasTrailIndex` tests (graph/root.ts:23): a built repo's
  * wiring graph, or a workspace parent's children index.
  */
 function repo(withGraph: boolean, artifact = ".graph/wiring.json", git = true) {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-"));
 	made.push(dir);
 	if (git) fs.mkdirSync(path.join(dir, ".git"));
 	if (withGraph) {
-		const file = path.join(dir, "graft", artifact);
+		const file = path.join(dir, ".trail", "cache", artifact);
 		fs.mkdirSync(path.dirname(file), { recursive: true });
 		fs.writeFileSync(file, "{}\n");
 	}
@@ -49,7 +49,7 @@ describe("cold build", () => {
 	});
 
 	it("names the session's directory, not pi's process cwd", async () => {
-		// pi.exec inherits pi's own cwd, so every graft call must name its
+		// pi.exec inherits pi's own cwd, so every trail call must name its
 		// directory or a session started elsewhere builds the wrong repo.
 		const dir = repo(false);
 		const harness = createHarness({ cwd: dir });
@@ -101,9 +101,9 @@ describe("cold build", () => {
 });
 
 describe("no rebuild after edits", () => {
-	it("never rebuilds: every graft query refreshes the graph itself", async () => {
-		// Verified against graft 0.16.0 — a symbol appended without a build is
-		// found, reporting "[graft] refreshed the graph (1 file changed)".
+	it("never rebuilds: every trail query refreshes the graph itself", async () => {
+		// Verified against trail 0.16.0 — a symbol appended without a build is
+		// found, reporting "[trail] refreshed the graph (1 file changed)".
 		const dir = repo(true);
 		const harness = createHarness({ cwd: dir });
 		await harness.emit("session_start");

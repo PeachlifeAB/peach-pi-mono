@@ -11,7 +11,7 @@ const made: string[] = [];
  * `extra` further callers so the cap can be exercised.
  */
 function repoWithGraph(extraCallers = 0) {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-blast-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-blast-"));
 	made.push(dir);
 	const nodes: any[] = [
 		{ id: "target.ts", name: "target.ts", kind: "file", path: "target.ts" },
@@ -24,7 +24,7 @@ function repoWithGraph(extraCallers = 0) {
 		nodes.push({ id, name: id, kind: "file", path: id });
 		edges.push({ source: id, target: "target.ts", relation: "imports", confidence: "extracted" });
 	}
-	const graph = path.join(dir, "graft", ".graph");
+	const graph = path.join(dir, ".trail", "cache", ".graph");
 	fs.mkdirSync(graph, { recursive: true });
 	fs.writeFileSync(path.join(graph, "wiring.json"), JSON.stringify({ meta: { version: 1 }, nodes, edges }));
 	return dir;
@@ -82,12 +82,12 @@ describe("blast radius", () => {
 		const dir = repoWithGraph();
 		const harness = createHarness({ cwd: dir, exec: realWhich });
 		await harness.emit("session_start");
-		const result = await harness.emit("tool_result", edit("graft/INDEX.md"));
+		const result = await harness.emit("tool_result", edit(".trail/cache/INDEX.md"));
 		expect(appended(result)).not.toContain("blast radius");
 	});
 
 	it("says nothing when the repo has no graph", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-nograph-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-nograph-"));
 		made.push(dir);
 		const harness = createHarness({ cwd: dir, exec: realWhich });
 		await harness.emit("session_start");

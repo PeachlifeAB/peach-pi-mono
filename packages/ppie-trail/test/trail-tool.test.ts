@@ -4,19 +4,19 @@ import { createHarness } from "./harness.ts";
 // Every case here is a defect that reached a live session. The tool schema is
 // the model's only interface, so each one is a wording or coercion bug, not a
 // logic bug — which is exactly why they survived review and not use.
-describe("graft tool", () => {
+describe("trail tool", () => {
 	it("names the subcommand as a parameter, not part of the tool name", () => {
-		// A live session called a tool literally named "graft ask" after a
+		// A live session called a tool literally named "trail ask" after a
 		// parameter description began with "ask:".
 		const { tool } = createHarness();
-		expect(tool.name).toBe("graft");
+		expect(tool.name).toBe("trail");
 		for (const property of Object.values<any>(tool.parameters.properties)) {
 			expect(property.description).not.toMatch(/^(ask|grep|map|skeleton|callers):/);
 		}
 	});
 
 	it("refuses a subcommand that needs a query without one, naming the fix", async () => {
-		// graft's own error names --pattern, a flag the model never wrote.
+		// trail's own error names --pattern, a flag the model never wrote.
 		const harness = createHarness();
 		const result = await harness.runTool({ command: "grep" });
 		expect(result.isError).toBe(true);
@@ -55,7 +55,7 @@ describe("graft tool", () => {
 
 		await harness.tool.execute(
 			"id",
-			{ command: "ask", query: "how does X work", full: "True", inPath: "packages/ppie-graft", limit: 7 },
+			{ command: "ask", query: "how does X work", full: "True", inPath: "packages/ppie-trail", limit: 7 },
 			undefined,
 			(update: { content: Array<{ text: string }> }) => updates.push(update.content[0].text),
 			{},
@@ -66,11 +66,11 @@ describe("graft tool", () => {
 			"--source",
 			"--full",
 			"--in",
-			"packages/ppie-graft",
+			"packages/ppie-trail",
 			"-n",
 			"7",
 		]);
-		expect(updates[0]).toContain("Running: graft ask");
+		expect(updates[0]).toContain("Running: trail ask");
 
 		await harness.runTool({ command: "grep", query: "stream", fixed: true, inPath: "src" });
 		expect(harness.calls.at(-1)?.args).toEqual(["grep", "stream", "--fixed", "--in", "src"]);
@@ -85,7 +85,7 @@ describe("graft tool", () => {
 	it("returns early for an aborted query and bounds oversized output", async () => {
 		const cancelled = createHarness();
 		const result = await cancelled.tool.execute("id", { command: "map" }, AbortSignal.abort(), undefined, {});
-		expect(result.content[0].text).toBe("Graft query cancelled.");
+		expect(result.content[0].text).toBe("Trail query cancelled.");
 		expect(cancelled.calls).toHaveLength(0);
 
 		const longOutput = Array.from({ length: 2001 }, (_, index) => `line ${index}`).join("\n");
@@ -101,9 +101,9 @@ describe("graft tool", () => {
 		const harness = createHarness();
 
 		await harness.runCommand("");
-		await harness.runCommand("grep packages/ppie-graft");
+		await harness.runCommand("grep packages/ppie-trail");
 
-		expect(harness.calls.map((call) => call.args)).toEqual([["map"], ["grep", "packages/ppie-graft"]]);
-		expect(harness.notices).toEqual(["No graft output received", "No graft output received"]);
+		expect(harness.calls.map((call) => call.args)).toEqual([["map"], ["grep", "packages/ppie-trail"]]);
+		expect(harness.notices).toEqual(["No trail output received", "No trail output received"]);
 	});
 });

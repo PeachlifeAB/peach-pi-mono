@@ -12,18 +12,18 @@ const made: string[] = [];
  * indexed but not present is one the working tree has moved or removed.
  */
 function repo(options: { indexed?: string[]; present?: string[] } = {}) {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-graft-stale-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ppie-trail-stale-"));
 	made.push(dir);
-	const graph = path.join(dir, "graft", ".graph");
+	const graph = path.join(dir, ".trail", "cache", ".graph");
 	fs.mkdirSync(graph, { recursive: true });
 	fs.writeFileSync(
 		path.join(graph, "wiring.json"),
 		JSON.stringify({ meta: { version: 1, nodeCount: 1, edgeCount: 0, scopes: [] }, nodes: [], edges: [] }),
 	);
-	fs.writeFileSync(path.join(dir, "graft", "INDEX.md"), "# graft — repo map\n");
+	fs.writeFileSync(path.join(dir, ".trail", "cache", "INDEX.md"), "# trail — repo map\n");
 	if (options.indexed) {
 		fs.writeFileSync(
-			path.join(dir, "graft", "manifest.json"),
+			path.join(dir, ".trail", "cache", "manifest.json"),
 			JSON.stringify({ files: options.indexed.map((p) => ({ path: p })) }),
 		);
 	}
@@ -60,7 +60,7 @@ describe("staleness banner", () => {
 	});
 
 	it("says nothing when the deep layer was never built", async () => {
-		// The bug this exists for: `graft check` exits non-zero on a repo with no
+		// The bug this exists for: `trail check` exits non-zero on a repo with no
 		// deep layer, which is not staleness — its own output says the wiring graph
 		// is the source of truth. Reading that exit code showed a false banner on
 		// every session, and the build it advised would not have cleared it.
@@ -84,7 +84,7 @@ describe("staleness banner", () => {
 
 	it("survives an unreadable manifest", async () => {
 		const dir = repo({ present: ["src/a.ts"] });
-		fs.writeFileSync(path.join(dir, "graft", "manifest.json"), "not json at all");
+		fs.writeFileSync(path.join(dir, ".trail", "cache", "manifest.json"), "not json at all");
 		const harness = createHarness({ cwd: dir, exec: realWhich });
 		await harness.emit("session_start");
 		const result = await harness.emit("before_agent_start", prompt);

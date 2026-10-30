@@ -9,7 +9,7 @@ Each package is independent. Install one without the others.
 
 ```bash
 pi install npm:@peachlife/ppie-recover
-pi install npm:@peachlife/ppie-graft
+pi install npm:@peachlife/ppie-trail
 pi install npm:@peachlife/ppie-custom-provider
 ```
 
@@ -23,9 +23,9 @@ Model discovery and login for any custom openai compatible server.
 
 Customizable error recovery with opinionated defaults.
 
-### [`ppie-graft`](packages/ppie-graft)
+### [`ppie-trail`](packages/ppie-trail)
 
-Integrates [graft](https://github.com/trailhq/Graft) as native tool in pi tui
+Integrates [Trail](https://github.com/trailhq/Trail-Code) as native tool in pi tui
 
 ## Develop
 

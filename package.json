@@ -24,15 +24,15 @@
 		"test": "pnpm -r run test",
 		"test:hooks": "node --test tests/pre-commit-partial-staging.test.mjs",
 		"coverage": "pnpm -r --if-present run test:coverage",
-		"crap": "gdog qa gate crap",
+		"crap": "gdog gate crap",
 		"mutation:dry": "stryker run --dryRunOnly",
 		"mutation": "stryker run",
 		"prepare": "husky"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
-		"@stryker-mutator/core": "10.0.0",
-		"@stryker-mutator/vitest-runner": "10.0.0",
+		"@stryker-mutator/core": "10.1.1",
+		"@stryker-mutator/vitest-runner": "10.1.1",
 		"@types/node": "catalog:",
 		"@vitest/coverage-v8": "catalog:",
 		"c8": "catalog:",

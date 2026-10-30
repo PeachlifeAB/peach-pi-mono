@@ -3,7 +3,7 @@ dist/
 **/coverage/
 .stryker-tmp/
 **/reports/
-.gdog/
+.gdog
 *.log
 # Rotated provider logs (see examples/.../src/logging.ts) — `*.log` misses these.
 *.log.[0-9]*
@@ -64,6 +64,7 @@ scratchpad/
 /CONTEXT.md
 /docs/adr
 /.harness-hash
+/.trail/
 /.husky
 /.qlty
 /AGENTS.md

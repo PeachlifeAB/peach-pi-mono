@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["sessionId", "cwd", "leafId", "entries"],
+  "properties": {
+    "sessionId": { "type": "string", "minLength": 1 },
+    "cwd": { "type": "string", "minLength": 1 },
+    "leafId": { "type": ["string", "null"] },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "parentId", "type", "timestamp"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "parentId": { "type": ["string", "null"] },
+          "type": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "customType": { "type": "string" },
+          "data": {},
+          "message": { "type": "object" }
+        }
+      }
+    }
+  }
+}

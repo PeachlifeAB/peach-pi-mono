@@ -6,7 +6,7 @@ Run `pnpm coverage` to generate each package's LCOV artifact. `pnpm crap` evalua
 those artifacts against a CRAP score of 30; missing coverage is a failure.
 
 `pnpm mutation:dry` proves Stryker's Vitest integration without mutating code.
-`pnpm mutation` mutates `ppie-graft` source. It is manual until its baseline score is
+`pnpm mutation` mutates `ppie-trail` source. It is manual until its baseline score is
 reviewed; do not add it to pre-push or normal CI.
 
 `pnpm check` and `pnpm test` run before every push. CI mirrors them. Generated

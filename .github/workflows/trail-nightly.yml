@@ -1,4 +1,4 @@
-name: graft version compatibility check
+name: trail version compatibility check
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "graft ref to test against (branch, tag, or commit)"
+        description: "trail ref to test against (branch, tag, or commit)"
         default: main
 
 concurrency:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   upstream:
-    name: ppie-graft against graft ${{ inputs.ref || 'main' }}
+    name: ppie-trail against trail ${{ inputs.ref || 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,27 +32,29 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Install graft from upstream
+      - name: Install trail from upstream
         id: install
         env:
-          GRAFT_REF: ${{ inputs.ref || 'main' }}
+          TRAIL_REF: ${{ inputs.ref || 'main' }}
+          CXXFLAGS: -std=c++20
         run: |
-          git init /tmp/graft
-          cd /tmp/graft
-          git remote add origin https://github.com/trailhq/Graft.git
-          git fetch --depth 1 origin "$GRAFT_REF"
+          git init /tmp/trail
+          cd /tmp/trail
+          git remote add origin https://github.com/trailhq/Trail-Code.git
+          git fetch --depth 1 origin "$TRAIL_REF"
           git checkout FETCH_HEAD
           npm install
-          npm link
+          node scripts/pack-trail.mjs
+          npm install --global ./build/trail
 
-      - name: Report the graft under test
+      - name: Report the trail under test
         run: |
-          echo "commit: $(git -C /tmp/graft rev-parse HEAD)"
-          echo "version: $(graft --version)"
+          echo "commit: $(git -C /tmp/trail rev-parse HEAD)"
+          echo "version: $(trail --version)"
 
-      - name: Run the ppie-graft suite
+      - name: Run the ppie-trail suite
         id: suite
-        run: pnpm --filter @peachlife/ppie-graft test
+        run: pnpm --filter @peachlife/ppie-trail test
 
       - name: Report failure
         if: failure()
@@ -60,7 +62,7 @@ jobs:
           INSTALL_OUTCOME: ${{ steps.install.outcome }}
         run: |
           if [ "$INSTALL_OUTCOME" = "failure" ]; then
-            echo "::error::graft did not install or build from upstream — its build, not our tests"
+            echo "::error::trail did not install or build from upstream — its build, not our tests"
           else
-            echo "::error::ppie-graft's own suite failed against upstream graft — our contract with it moved"
+            echo "::error::ppie-trail's own suite failed against upstream trail — our contract with it moved"
           fi
