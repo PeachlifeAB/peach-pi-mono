@@ -5,7 +5,7 @@
  * Dependency-injection-testing skill applied:
  * - Ports: provider streamFn, pi host event bus, ExtensionContext/ui/compact.
  * - Fakes: stateful fakes for those ports.
- * - Fixtures: plain reported JSONL/session data from test/fixtures.
+ * - Fixtures: synthetic scenarios from test/fakes/recovery-scenarios.ts.
  * - Time: Vitest virtual timers; no wall sleeps.
  * - Assertions: observable Agent state + fake adapter state, not source text.
  */
@@ -37,28 +37,10 @@ import {
 	streamFor,
 	tinyStopI,
 } from "./fakes/real-agent-harness.ts";
+import { recoveryScenarios } from "./fakes/recovery-scenarios.ts";
 import { registerRetryAgentForSessionManager } from "./fakes/retry-agent.ts";
 import { ENABLED_OVERFLOW_POLICY, enabledOverflowPolicy } from "./fakes/retry-policy.ts";
 import { fakeAssistantSessionEntry } from "./fakes/session-entry.ts";
-import {
-	OH_MY_TOKENS_RAW_FAILURE_JSONL,
-	OH_MY_TOKENS_RAW_LONG_PROMPT,
-	PLANE_COMPACTED_TOKENS,
-	PLANE_COMPACTION_TAIL_APPROX_TOKENS,
-	PLANE_CONTEXT_OVERFLOW_117894,
-	PLANE_FALLBACK_COMPACT_FAILURE,
-	PLANE_SESSION_JSONL,
-	PLANE_TINY_LENGTH_STOP_THE,
-	REPLACE_SESSION_JSONL,
-	REPORTED_CONTEXT_OVERFLOW_74822,
-	REPORTED_CONTEXT_OVERFLOW_78409,
-	REPORTED_CONTEXT_OVERFLOW_112353_MARGINAL,
-	REPORTED_CONTEXT_OVERFLOW_F3B4C95E,
-	REPORTED_PREFILL_MEMORY_GUARD_64473DEB,
-	REPORTED_PREFILL_MEMORY_GUARD_BARE_PROSE,
-	REPORTED_TINY_LENGTH_STOPS,
-	SPEC_ZERO_OUTPUT_HEARTBEAT,
-} from "./fixtures/reported-recovery-fixtures.ts";
 
 const CORE_TERMINAL_OVERFLOW_FAILURE =
 	'prompt is too long: 1625504 tokens exceeds the context window of 112000 tokens (400: {"message":"Prompt too long: 1625504 tokens exceeds max context window of 112000 tokens","type":"invalid_request_error","param":null,"code":null})\n\nContext overflow recovery failed after one compact-and-retry attempt. Try reducing context or switching to a larger-context model.';
@@ -78,8 +60,8 @@ describe("retry(pi) real public interface via real Agent", () => {
 		vi.useRealTimers();
 	});
 
-	for (const fixture of REPORTED_TINY_LENGTH_STOPS) {
-		test(`reported 1-token length stop ${fixture.id} (${REPLACE_SESSION_JSONL}) heals after core compaction`, async () => {
+	for (const fixture of recoveryScenarios.tinyLengthStops) {
+		test(`1-token length stop ${fixture.id} heals after core compaction`, async () => {
 			const { agent, provider, pi, ctx, ctxCore } = harness([fixture, cleanStop()]);
 
 			await promptOnce(agent);
@@ -95,8 +77,8 @@ describe("retry(pi) real public interface via real Agent", () => {
 		});
 	}
 
-	test("reported keepalive-with-real-output is not swallowed before recovery", async () => {
-		const { agent, provider, pi, ctx } = harness([REPORTED_TINY_LENGTH_STOPS[2], cleanStop()]);
+	test("keepalive-with-real-output is not swallowed before recovery", async () => {
+		const { agent, provider, pi, ctx } = harness([recoveryScenarios.tinyLengthStops[2], cleanStop()]);
 
 		await promptOnce(agent);
 		emitCompactionComplete(pi, ctx);
@@ -107,7 +89,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("zero-output heartbeat contract is ignored, not healed", async () => {
-		const { agent, provider, pi, ctx } = harness([SPEC_ZERO_OUTPUT_HEARTBEAT as AssistantFixture, cleanStop()]);
+		const { agent, provider, pi, ctx } = harness([recoveryScenarios.heartbeat as AssistantFixture, cleanStop()]);
 
 		await promptOnce(agent);
 		emitCompactionComplete(pi, ctx);
@@ -118,7 +100,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("length-only pressure does not force compact after the recovery wait", async () => {
-		const { agent, provider, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()]);
+		const { agent, provider, ctxCore } = harness([recoveryScenarios.tinyLengthStops[0], cleanStop()]);
 
 		await promptOnce(agent);
 		await vi.advanceTimersByTimeAsync(20_000);
@@ -163,7 +145,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 		ctxCore.onCompactComplete = () => pi.emit("session_compact", { compactionEntry: { id: "rescue-compact" } }, ctx);
 		retry(pi, { policy: ENABLED_OVERFLOW_POLICY });
 
-		const sequence = [REPORTED_TINY_LENGTH_STOPS[0], cleanStop()];
+		const sequence = [recoveryScenarios.tinyLengthStops[0], cleanStop()];
 		let call = 0;
 		const streamFn = async (
 			model: unknown,
@@ -251,7 +233,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// Length-stop fallback is intentionally compaction-only: payload trimming
 	// is reserved for classified provider memory pressure.
 	test("length-stop recovery refuses to start a second compaction when core remains in progress past its bound", async () => {
-		const { agent, provider, pi, ctx, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()]);
+		const { agent, provider, pi, ctx, ctxCore } = harness([recoveryScenarios.tinyLengthStops[0], cleanStop()]);
 
 		await promptOnce(agent);
 		pi.emit("session_before_compact", { reason: "overflow" }, ctx);
@@ -267,7 +249,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("a compaction completed before a length-only stop cannot authorize a retry", async () => {
-		const { agent, provider, pi, ctx, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()]);
+		const { agent, provider, pi, ctx, ctxCore } = harness([recoveryScenarios.tinyLengthStops[0], cleanStop()]);
 
 		emitCompactionComplete(pi, ctx, "manual");
 		await promptOnce(agent);
@@ -280,7 +262,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("length-only pressure yields without retry, compaction, or trimming", async () => {
-		const { agent, provider, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()]);
+		const { agent, provider, ctxCore } = harness([recoveryScenarios.tinyLengthStops[0], cleanStop()]);
 
 		await promptOnce(agent);
 		await vi.advanceTimersByTimeAsync(20_000);
@@ -294,12 +276,15 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("length-only output pressure yields once without stopping the turn", async () => {
-		const { agent, provider, pi, ctx, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0]], enabledOverflowPolicy(2));
+		const { agent, provider, pi, ctx, ctxCore } = harness(
+			[recoveryScenarios.tinyLengthStops[0]],
+			enabledOverflowPolicy(2),
+		);
 		await promptOnce(agent);
 		await vi.advanceTimersByTimeAsync(20_000);
 		await flushAsync();
 
-		pi.emit("message_end", { message: REPORTED_TINY_LENGTH_STOPS[0] }, ctx);
+		pi.emit("message_end", { message: recoveryScenarios.tinyLengthStops[0] }, ctx);
 		await vi.advanceTimersByTimeAsync(20_000);
 		await flushAsync();
 
@@ -343,7 +328,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 		// post-run loop will call agent.continue(). ppie-recover must only clean up
 		// its defer state, not concurrently call agent.prompt([]).
 		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_78409),
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
 			cleanStop(),
 		]);
 		ctxCore.contextWindow = 97_000;
@@ -413,7 +398,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// fully-armed prune budget that could have healed it (live overage was
 	// 1,353 tokens vs ~16.7K prunable).
 	test("core strips the trailing overflow error and silently declines to compact (session too small): the defer fallback must still drive a pruned retry", async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(REPORTED_CONTEXT_OVERFLOW_78409), cleanStop()]);
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.coreMatchedOverflow), cleanStop()]);
 		ctxCore.contextWindow = 72_099;
 
 		await promptOnce(agent);
@@ -441,17 +426,14 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("context fallback failure continues the bounded retry without memory trimming", async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(PLANE_CONTEXT_OVERFLOW_117894), cleanStop()]);
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.fallbackOverflow), cleanStop()]);
 		ctxCore.contextWindow = 112_000;
-		expect(PLANE_SESSION_JSONL).toContain("019f47ea-cad2");
-		expect(PLANE_TINY_LENGTH_STOP_THE.stopReason).toBe("length");
-		expect(PLANE_COMPACTED_TOKENS).toBe(101_901);
-		expect(PLANE_COMPACTION_TAIL_APPROX_TOKENS).toBe(13_100);
+		expect(recoveryScenarios.tinyLengthStops[0].stopReason).toBe("length");
 		agent.state.messages = [
 			{ role: "user", content: "x".repeat(260_000) },
 			{ role: "assistant", content: "y".repeat(230_000) },
 		] as never;
-		ctxCore.failNextCompact = PLANE_FALLBACK_COMPACT_FAILURE;
+		ctxCore.failNextCompact = recoveryScenarios.compactFailure;
 
 		await promptOnce(agent);
 		await vi.advanceTimersByTimeAsync(20_000);
@@ -462,7 +444,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 		expect(ctxCore.ui.notifications.some((n) => n.message.includes("Emergency-pruned"))).toBe(false);
 	});
 
-	test("reported MARGINAL context_overflow (112353 vs 112000 tokens) on a real, organically large Agent history: the retry must actually succeed, not just shrink the payload by SOME amount", async () => {
+	test("marginal context_overflow on a real, organically large Agent history: the retry must actually succeed, not just shrink the payload by SOME amount", async () => {
 		// Seed a real, large accumulated history — the same rough shape a
 		// live session builds up across several tool-call rounds: multiple
 		// user/assistant/toolResult turns, each carrying real bulk text
@@ -491,10 +473,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 			});
 		}
 
-		const { agent, provider, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_112353_MARGINAL),
-			cleanStop(),
-		]);
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.marginalOverflow), cleanStop()]);
 
 		ctxCore.contextWindow = 112_000;
 		// Seed the REAL Agent's message history directly — this is what
@@ -636,7 +615,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("core compaction inside the 20s window cancels forced compact", async () => {
-		const { agent, provider, pi, ctx, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[1], cleanStop()]);
+		const { agent, provider, pi, ctx, ctxCore } = harness([recoveryScenarios.tinyLengthStops[1], cleanStop()]);
 
 		await promptOnce(agent);
 		await vi.advanceTimersByTimeAsync(300);
@@ -650,7 +629,10 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("compaction disabled does not send the clamped request", async () => {
-		const { agent, provider, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()], COMPACTION_OFF_POLICY);
+		const { agent, provider, ctxCore } = harness(
+			[recoveryScenarios.tinyLengthStops[0], cleanStop()],
+			COMPACTION_OFF_POLICY,
+		);
 		await promptOnce(agent);
 		expect(provider.requests).toHaveLength(1);
 
@@ -697,7 +679,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	test("memory_guard that arrives during an existing retry cancels the generic loop and lets compaction own the next step", async () => {
 		const { agent, provider, ctxCore } = harness([
 			errorMessage(CORE_UNRECOGNIZED_OVERFLOW),
-			errorMessage(REPORTED_PREFILL_MEMORY_GUARD_64473DEB),
+			errorMessage(recoveryScenarios.memoryGuard),
 			cleanStop(),
 		]);
 
@@ -808,8 +790,8 @@ describe("retry(pi) real public interface via real Agent", () => {
 		).toBeGreaterThanOrEqual(1);
 	});
 
-	test("reported memory_guard 400 64473deb compacts first, then heals after retry backoff", async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(REPORTED_PREFILL_MEMORY_GUARD_64473DEB), cleanStop()]);
+	test("memory_guard 400 64473deb compacts first, then heals after retry backoff", async () => {
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.memoryGuard), cleanStop()]);
 
 		await promptOnce(agent);
 		expect(provider.requests).toHaveLength(1);
@@ -835,7 +817,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// discarded this genuine fatal error before errorMessage was ever read:
 	// zero notification, zero retry — exactly the reported "not auto healing"
 	// symptom. Fixed with a stopReason==="error" check in isKeepaliveFrame.
-	test("reported bare-prose memory_guard error with responseModel=keepalive and zero output is NOT dropped as a heartbeat — it retries", async () => {
+	test("bare-prose memory_guard error with responseModel=keepalive and zero output is NOT dropped as a heartbeat — it retries", async () => {
 		const { agent, provider, ctxCore } = harness([
 			{
 				role: "assistant",
@@ -843,7 +825,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 				model: "Qwen3.6-27B-oQ4-mtp",
 				responseModel: "keepalive",
 				stopReason: "error",
-				errorMessage: REPORTED_PREFILL_MEMORY_GUARD_BARE_PROSE,
+				errorMessage: recoveryScenarios.bareMemoryGuard,
 				usage: {
 					input: 0,
 					output: 0,
@@ -886,7 +868,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// same bug: notify once, poll until the queue clears, THEN run the
 	// retry — or terminal with a visible reason if it never clears.
 	test("a memory_guard error with ctx.hasPendingMessages() true at message_end time notifies, waits, then retries once the queue clears", async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(REPORTED_PREFILL_MEMORY_GUARD_64473DEB), cleanStop()]);
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.memoryGuard), cleanStop()]);
 
 		// Simulate the real-world condition: pi-core still has pending
 		// messages queued (e.g. from a large prior turn) at the exact
@@ -927,7 +909,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("a memory_guard error with a permanently pending queue yields visibly after the bounded wait", async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(REPORTED_PREFILL_MEMORY_GUARD_64473DEB), cleanStop()]);
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.memoryGuard), cleanStop()]);
 
 		ctxCore.pendingMessages = true;
 
@@ -1016,8 +998,8 @@ describe("retry(pi) real public interface via real Agent", () => {
 		).toBe(true);
 	});
 
-	test(`reported context overflow f3b4c95e (${OH_MY_TOKENS_RAW_FAILURE_JSONL}) defers to core compaction because pi-ai 1.2 matches its wording`, async () => {
-		const { agent, provider, ctxCore } = harness([errorMessage(REPORTED_CONTEXT_OVERFLOW_F3B4C95E), cleanStop()]);
+	test(`context overflow with provider wording defers to core compaction`, async () => {
+		const { agent, provider, ctxCore } = harness([errorMessage(recoveryScenarios.higherOverflow), cleanStop()]);
 
 		await promptOnce(agent);
 		// pi-ai 1.2 matches "Prompt too long" (without "is"), so core owns this overflow and
@@ -1044,7 +1026,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 
 	test("compaction disabled observes Pi but never calls ctx.compact", async () => {
 		const { agent, provider, ctxCore } = harness(
-			[errorMessage(REPORTED_CONTEXT_OVERFLOW_74822), cleanStop()],
+			[errorMessage(recoveryScenarios.lowerOverflow), cleanStop()],
 			COMPACTION_OFF_POLICY,
 		);
 
@@ -1068,17 +1050,15 @@ describe("retry(pi) real public interface via real Agent", () => {
 
 	for (const reportedOverflow of [
 		{
-			name: "78409-token raw-long-prompt",
-			source: OH_MY_TOKENS_RAW_LONG_PROMPT,
-			error: REPORTED_CONTEXT_OVERFLOW_78409,
+			name: "core-matched",
+			error: recoveryScenarios.coreMatchedOverflow,
 		},
 		{
-			name: "74822-token raw-long-prompt",
-			source: OH_MY_TOKENS_RAW_LONG_PROMPT,
-			error: REPORTED_CONTEXT_OVERFLOW_74822,
+			name: "lower-excess",
+			error: recoveryScenarios.lowerOverflow,
 		},
 	]) {
-		test(`reported core-matched context overflow ${reportedOverflow.name} uses the selected 20s fallback delay, then retries`, async () => {
+		test(`core-matched context overflow ${reportedOverflow.name} uses the selected 20s fallback delay, then retries`, async () => {
 			const { agent, provider, ctxCore } = harness([errorMessage(reportedOverflow.error), cleanStop()]);
 
 			await promptOnce(agent);
@@ -1100,7 +1080,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 
 	test("agent_settled must not cancel a pending core-defer fallback recovery", async () => {
 		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_78409),
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
 			cleanStop(),
 		]);
 
@@ -1117,7 +1097,10 @@ describe("retry(pi) real public interface via real Agent", () => {
 	});
 
 	test("stale session_before_compact from an old session cannot suppress a new recovery fallback", async () => {
-		const { agent, provider, pi, ctxCore } = harness([errorMessage(REPORTED_CONTEXT_OVERFLOW_78409), cleanStop()]);
+		const { agent, provider, pi, ctxCore } = harness([
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
+			cleanStop(),
+		]);
 		const oldCtxCore = new CtxFakeCore();
 		oldCtxCore.markStale();
 		const oldCtx = noOpProxy(oldCtxCore) as unknown as CtxFakeCore;
@@ -1137,7 +1120,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 
 	test("context-overflow recovery refuses to start a second compaction when core remains in progress past the defer bound", async () => {
 		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_78409),
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
 			cleanStop(),
 		]);
 
@@ -1154,9 +1137,9 @@ describe("retry(pi) real public interface via real Agent", () => {
 		);
 	});
 
-	test("reported context overflow does not double-compact when core compacts during the defer window", async () => {
+	test("context overflow does not double-compact when core compacts during the defer window", async () => {
 		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_78409),
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
 			cleanStop(),
 		]);
 
@@ -1185,7 +1168,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// compaction begins) through retry.ts -> recovery.onCompactionStart().
 	test("session_before_compact firing before the defer deadline prevents a redundant fallback compact() when session_compact lands after it", async () => {
 		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_CONTEXT_OVERFLOW_78409),
+			errorMessage(recoveryScenarios.coreMatchedOverflow),
 			cleanStop(),
 		]);
 
@@ -1252,10 +1235,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 	// docs/pi-extension-hooks.md's session_shutdown row and
 	// docs/smoke-testing.md.
 	test("a session fork mid-retry-backoff must not crash on a stale captured ctx", async () => {
-		const { agent, provider, pi, ctx, ctxCore } = harness([
-			errorMessage(REPORTED_PREFILL_MEMORY_GUARD_64473DEB),
-			cleanStop(),
-		]);
+		const { agent, provider, pi, ctx, ctxCore } = harness([errorMessage(recoveryScenarios.memoryGuard), cleanStop()]);
 
 		await promptOnce(agent);
 		expect(provider.requests).toHaveLength(1);
@@ -1509,7 +1489,7 @@ describe("retry(pi) real public interface via real Agent", () => {
 				cost,
 			},
 		};
-		const { agent, provider, pi, ctx, ctxCore } = harness([REPORTED_TINY_LENGTH_STOPS[0], cleanStop()]);
+		const { agent, provider, pi, ctx, ctxCore } = harness([recoveryScenarios.tinyLengthStops[0], cleanStop()]);
 
 		await promptOnce(agent);
 		expect(provider.requests).toHaveLength(1);
