@@ -1,6 +1,6 @@
 {
 	"name": "@peachlife/ppie-trail",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "pi extension exposing the trail codebase graph as a tool, with per-session orientation and token-savings tracking",
 	"license": "MIT",
 	"repository": {
