@@ -1,6 +1,6 @@
 {
 	"name": "@peachlife/ppie-trail",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "pi extension exposing the trail codebase graph as a tool, with per-session orientation and token-savings tracking",
 	"license": "MIT",
 	"repository": {
@@ -37,7 +37,8 @@
 	"scripts": {
 		"test": "vitest run -c vitest.config.ts",
 		"test:coverage": "vitest run -c vitest.config.ts --coverage",
-		"release": "npm publish --access public",
+		"patch": "npm version patch -m 'ppie-trail %s'",
+		"release": "npm login && npm publish --access public",
 		"prepublishOnly": "pnpm test"
 	},
 	"dependencies": {
