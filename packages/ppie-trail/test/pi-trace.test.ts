@@ -4,12 +4,11 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { hashPiInput } from "../src/pi-dialect.ts";
 import { createPiTrace } from "../src/pi-trace.ts";
-import { runWorker } from "../src/worker-process.ts";
+import { foldPiTrace } from "../src/pi-trace-fold.ts";
 import { archiveFixtures } from "./fixture-cleanup.ts";
 
 const directories: string[] = [];
 afterAll(() => archiveFixtures(directories));
-const worker = fileURLToPath(new URL("../src/pi-trace-worker.ts", import.meta.url));
 function setup(version = "0.28.0") {
 	const scratch = fileURLToPath(new URL("../../../.gdog/.scratch/", import.meta.url));
 	mkdirSync(scratch, { recursive: true });
@@ -71,9 +70,7 @@ describe("isolated Pi trace integration", () => {
 
 	it("rejects untested installed versions before loading their private module", async () => {
 		const { cwd, session, trace, ctx, status } = setup("0.29.0");
-		await expect(runWorker(worker, [cwd], JSON.stringify(session), cwd, process.env)).rejects.toThrow(
-			"Unsupported Trail trace version",
-		);
+		await expect(foldPiTrace(cwd, session, cwd)).rejects.toThrow("Unsupported Trail trace version");
 		await expect(trace.refresh(ctx)).resolves.toBeUndefined();
 		expect(status.at(-1)).toBe("Pi trace unavailable · native hooks retained");
 	});

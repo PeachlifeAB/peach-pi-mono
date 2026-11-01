@@ -48,7 +48,7 @@ export interface HookReply {
 }
 
 export type HookRunner = (event: HookEvent, input: HookInput) => Promise<HookReply>;
-const worker = fileURLToPath(new URL("./hook-worker.ts", import.meta.url));
+const worker = fileURLToPath(new URL("./hook-worker.mjs", import.meta.url));
 const schema = JSON.parse(readFileSync(new URL("./hook-output.schema.json", import.meta.url), "utf8"));
 const validator = new Ajv2020();
 const validate = validator.compile<UpstreamReply>(schema);

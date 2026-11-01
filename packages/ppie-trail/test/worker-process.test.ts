@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
@@ -101,4 +101,18 @@ it.runIf(process.platform !== "win32")("kills a child after its owner exits", as
 	} finally {
 		for (const pid of [sleeper.pid, watcher.pid]) if (pid && isRunning(pid)) process.kill(pid, "SIGKILL");
 	}
+});
+
+it("runs the hook worker from an installed node_modules path", async () => {
+	const scratch = fileURLToPath(new URL("../../../.gdog/.scratch/", import.meta.url));
+	mkdirSync(scratch, { recursive: true });
+	const cwd = mkdtempSync(path.join(scratch, "installed-worker-"));
+	directories.push(cwd);
+	const installed = path.join(cwd, "node_modules", "@peachlife", "ppie-trail", "src");
+	mkdirSync(installed, { recursive: true });
+	const worker = path.join(installed, "hook-worker.mjs");
+	copyFileSync(fileURLToPath(new URL("../src/hook-worker.mjs", import.meta.url)), worker);
+	const module = path.join(cwd, "hook-module.mjs");
+	writeFileSync(module, "export const main = (event) => process.stdout.write(event);\n");
+	await expect(runWorker(worker, [module, "prompt"], "{}", cwd, process.env)).resolves.toBe("prompt");
 });

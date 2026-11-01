@@ -1,10 +1,9 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { hashPiInput } from "./pi-dialect.ts";
-import { runWorker } from "./worker-process.ts";
+import { foldPiTrace } from "./pi-trace-fold.ts";
 
 interface TraceContext {
 	cwd: string;
@@ -27,7 +26,6 @@ interface TraceReport {
 const validate = new Ajv2020().compile<TraceReport>(
 	JSON.parse(readFileSync(new URL("./pi-trace.schema.json", import.meta.url), "utf8")),
 );
-const worker = fileURLToPath(new URL("./pi-trace-worker.ts", import.meta.url));
 
 export function createPiTrace(pi: Pick<ExtensionAPI, "appendEntry">, root: () => string | undefined) {
 	return {
@@ -49,11 +47,7 @@ export function createPiTrace(pi: Pick<ExtensionAPI, "appendEntry">, root: () =>
 				entries: ctx.sessionManager.getEntries(),
 			};
 			try {
-				const output = await runWorker(worker, [installed], JSON.stringify(snapshot), ctx.cwd, {
-					...process.env,
-					TRAIL_HOME: path.join(ctx.cwd, ".trail", "cache", "pi"),
-				});
-				const report: unknown = JSON.parse(output);
+				const report: unknown = await foldPiTrace(installed, snapshot, path.join(ctx.cwd, ".trail", "cache", "pi"));
 				if (!validate(report) || report.sessionId !== snapshot.sessionId || report.leafId !== snapshot.leafId)
 					throw new Error("Invalid Pi trace identity");
 				if (
