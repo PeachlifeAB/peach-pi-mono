@@ -318,13 +318,12 @@ importers:
 
   packages/ppie-trail:
     dependencies:
+      '@earendil-works/pi-coding-agent':
+        specifier: '*'
+        version: 1.4.0(@aws-sdk/credential-provider-node@3.972.90)(@smithy/signature-v4@5.7.4)(supports-color@7.2.0)(ws@8.22.0)(zod@4.6.7)
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
-    devDependencies:
-      '@earendil-works/pi-coding-agent':
-        specifier: ^1.4.0
-        version: 1.4.0(@aws-sdk/credential-provider-node@3.972.90)(@smithy/signature-v4@5.7.4)(supports-color@7.2.0)(ws@8.22.0)(zod@4.6.7)
 
 packages:
 
