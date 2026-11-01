@@ -5,7 +5,7 @@ const watchdog = fileURLToPath(new URL("./owner-watchdog.mjs", import.meta.url))
 const owned = new Set<number>();
 const watchdogs = new Map<number, number>();
 
-export function isRunning(pid: number): boolean {
+function isRunning(pid: number): boolean {
 	try {
 		process.kill(pid, 0);
 		return true;
