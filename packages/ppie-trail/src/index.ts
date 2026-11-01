@@ -8,15 +8,21 @@ import { createHookEvents } from "./hook-events.ts";
 import { type HookRunner, runHook } from "./hook-process.ts";
 import { binaryVersion, loadTrailFormat, versionSkewStatus } from "./installation.ts";
 import { createPiTrace } from "./pi-trace.ts";
+import { ownUntilShutdown, stopWatching, supervisedExec } from "./process-supervision.ts";
 import { registerTrailTool } from "./tool.ts";
 
 const MIN_PROMPT_CHARS = 12;
 export default function (
 	pi: any,
-	dependencies: { hooks: (root: string) => HookRunner | undefined; formatRoots?: readonly string[] } = {
+	dependencies: {
+		hooks: (root: string) => HookRunner | undefined;
+		formatRoots?: readonly string[];
+		exec?: (command: string, args: string[], options?: object) => Promise<unknown>;
+	} = {
 		hooks: (root) => (event, input) => runHook(root, event, input),
 	},
 ) {
+	const exec = dependencies.exec ?? supervisedExec;
 	let upstream: HookBridge | undefined;
 	let installedRoot: string | undefined;
 	const trace = createPiTrace(pi, () => installedRoot);
@@ -65,7 +71,7 @@ export default function (
 		fs.existsSync(path.join(trailDir(cwd), "workspace.json"));
 	async function runTrail(cwd: string, args: string[]) {
 		try {
-			return await pi.exec("trail", args, { timeout: 15000, cwd });
+			return await exec("trail", args, { timeout: 15000, cwd });
 		} catch {
 			return null;
 		}
@@ -79,14 +85,14 @@ export default function (
 		updateStatusline(ctx);
 		const cwd = ctx?.cwd || process.cwd();
 
-		const loaded = await loadTrailFormat(cwd, pi.exec, dependencies.formatRoots);
+		const loaded = await loadTrailFormat(cwd, exec, dependencies.formatRoots);
 		installedRoot = loaded?.root;
 		trailFormat = loaded?.format ?? null;
 		mapDirFor = loaded?.mapDirFor;
 		const hookRunner = loaded?.root ? dependencies.hooks(loaded.root) : undefined;
 		upstream = hookRunner ? createHookBridge(hookRunner) : undefined;
 		rootVersion = loaded?.rootVersion ?? null;
-		binaryVersionSeen = await binaryVersion(pi.exec);
+		binaryVersionSeen = await binaryVersion(exec);
 		updateStatusline(ctx);
 		if (upstream) await upstreamEvents.start(ctx);
 
@@ -95,11 +101,15 @@ export default function (
 
 		buildFailed = false;
 		const build = spawn("trail", ["build", cwd], { stdio: "ignore" });
+		if (typeof build.pid === "number") ownUntilShutdown(build.pid);
 		const finished = (ok: boolean) => {
 			buildFailed = !ok || !hasGraph(cwd);
 			updateStatusline(ctx);
 		};
-		build.on("exit", (code: number | null) => finished(code === 0));
+		build.on("exit", (code: number | null) => {
+			if (typeof build.pid === "number") stopWatching(build.pid);
+			finished(code === 0);
+		});
 
 		build.on("error", () => finished(false));
 	});
@@ -169,5 +179,5 @@ export default function (
 			}
 		}
 	});
-	registerTrailTool(pi);
+	registerTrailTool(pi, exec);
 }

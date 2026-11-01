@@ -81,7 +81,7 @@ export function createHarness(options: HarnessOptions = {}) {
 			};
 		},
 	};
-	register(pi, { hooks: () => options.hooks, formatRoots: [] });
+	register(pi, { hooks: () => options.hooks, formatRoots: [], exec: pi.exec });
 
 	const ctx = {
 		sessionManager: { getSessionId: () => "pi-harness" },

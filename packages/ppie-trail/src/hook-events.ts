@@ -3,6 +3,7 @@ import type { HookBridge } from "./hook-bridge.ts";
 import type { HookInput } from "./hook-process.ts";
 import { normalizePiTool } from "./pi-dialect.ts";
 import type { PiTrace } from "./pi-trace.ts";
+import { shutdownSupervision } from "./process-supervision.ts";
 
 interface ToolEvent {
 	toolName: string;
@@ -96,6 +97,7 @@ export function createHookEvents(pi: ExtensionAPI, current: () => HookBridge | u
 		}
 	});
 	pi.on("session_shutdown", async (_event, ctx) => {
+		shutdownSupervision();
 		try {
 			await current()?.shutdown(input(ctx));
 			notices(ctx);

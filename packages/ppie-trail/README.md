@@ -23,6 +23,13 @@ turn-end and shutdown hooks to the installed Trail package. Hooks run in child
 processes with piped JSON input; they never read Pi's terminal. Upstream owns
 learning retrieval, skill guards, overlap detection and turn-end graph sync.
 
+Every Trail process this extension starts has an owner. Hook workers, direct CLI
+calls and background indexing are killed on timeout, cancellation, session
+shutdown and owner exit, including their descendant trees. Windows uses a
+process-tree kill. Upstream sync work that detaches on purpose is adopted until
+shutdown rather than abandoned. A stalled child is force-killed; SIGTERM alone
+is not treated as exit.
+
 Three of those behaviors need no prompting: a repository with no graph is
 indexed in the background at session start, any file a tool names reports what
 depends on it, and retrieval narrows to the sub-project being worked on.

@@ -20,7 +20,10 @@ function truncateOutput(content: string, maxBytes = DEFAULT_MAX_BYTES, maxLines 
 	};
 }
 
-export function registerTrailTool(pi: any) {
+export function registerTrailTool(
+	pi: any,
+	exec = (command: string, args: string[], options?: object) => pi.exec(command, args, options),
+) {
 	pi.registerTool({
 		name: "trail",
 		label: "Trail Context",
@@ -134,7 +137,7 @@ export function registerTrailTool(pi: any) {
 			onUpdate?.({
 				content: [{ type: "text", text: `Running: trail ${args.join(" ")}...` }],
 			});
-			const res = await pi.exec("trail", args, { signal, timeout: 15000 });
+			const res = await exec("trail", args, { signal, timeout: 15000 });
 			const raw = (res.stdout || "") + (res.stderr ? `\n${res.stderr}` : "");
 			const { content } = truncateOutput(raw);
 			return {
@@ -147,7 +150,7 @@ export function registerTrailTool(pi: any) {
 		description: "Run a trail command and inspect repository graph state",
 		handler: async (args: string, ctx: any) => {
 			const parts = (args || "").trim().split(/\s+/).filter(Boolean);
-			const res = await pi.exec("trail", parts.length > 0 ? parts : ["map"]);
+			const res = await exec("trail", parts.length > 0 ? parts : ["map"]);
 			ctx.ui?.notify?.(res.stdout || res.stderr || "No trail output received", "info");
 		},
 	});
