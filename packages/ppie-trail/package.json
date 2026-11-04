@@ -37,7 +37,9 @@
 	"scripts": {
 		"test": "vitest run -c vitest.config.ts",
 		"test:coverage": "vitest run -c vitest.config.ts --coverage",
-		"patch": "npm version patch -m 'ppie-trail %s'",
+		"patch": "npm version patch",
+		"preversion": "git diff --quiet -- . && git diff --cached --quiet -- .",
+		"postversion": "git commit -m \"ppie-trail $npm_package_version\" -- package.json && git tag \"ppie-trail@$npm_package_version\"",
 		"release": "npm login && npm publish --access public",
 		"prepublishOnly": "pnpm test"
 	},
