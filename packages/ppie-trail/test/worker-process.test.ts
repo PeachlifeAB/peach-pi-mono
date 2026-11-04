@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
@@ -115,4 +115,41 @@ it("runs the hook worker from an installed node_modules path", async () => {
 	const module = path.join(cwd, "hook-module.mjs");
 	writeFileSync(module, "export const main = (event) => process.stdout.write(event);\n");
 	await expect(runWorker(worker, [module, "prompt"], "{}", cwd, process.env)).resolves.toBe("prompt");
+});
+
+it.runIf(process.platform !== "win32")(
+	"ignores spawn reports left by earlier runs",
+	async () => {
+		const scratch = path.resolve("../../.gdog/.scratch/trail-child-cleanup");
+		mkdirSync(scratch, { recursive: true });
+		const cwd = mkdtempSync(path.join(scratch, "stale-report-"));
+		directories.push(cwd);
+		const worker = path.join(cwd, "quiet-worker.mjs");
+		writeFileSync(worker, 'process.stdout.write("done");\n');
+		const bystander = spawn("sleep", ["30"], { stdio: "ignore" });
+		try {
+			const staleReports = [
+				{ pid: 1, args: ["node", "sync-run.js"] },
+				{ pid: bystander.pid, args: ["node", "stale-worker-child.js"] },
+			];
+			writeFileSync(path.join(cwd, ".spawn-report.ndjson"), staleReports.map((r) => JSON.stringify(r)).join("\n"));
+			await expect(runWorker(worker, [], "{}", cwd, process.env)).resolves.toBe("done");
+			expect(isRunning(bystander.pid ?? 0)).toBe(true);
+			expect(readdirSync(cwd).sort()).toEqual([".spawn-report.ndjson", "quiet-worker.mjs"]);
+		} finally {
+			bystander.kill("SIGKILL");
+		}
+	},
+	20000,
+);
+
+it("leaves no spawn report in the project directory", async () => {
+	const scratch = path.resolve("../../.gdog/.scratch/trail-child-cleanup");
+	mkdirSync(scratch, { recursive: true });
+	const cwd = mkdtempSync(path.join(scratch, "clean-cwd-"));
+	directories.push(cwd);
+	const worker = path.join(cwd, "quiet-worker.mjs");
+	writeFileSync(worker, 'process.stdout.write("done");\n');
+	await expect(runWorker(worker, [], "{}", cwd, process.env)).resolves.toBe("done");
+	expect(readdirSync(cwd)).toEqual(["quiet-worker.mjs"]);
 });

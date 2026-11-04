@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { adoptReportedChildren, killProcessTree, stopWatching, watchOwner } from "./process-supervision.ts";
 
@@ -14,7 +16,8 @@ export function runWorker(
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const isolateProcessGroup = process.platform !== "win32";
-		const reportPath = `${cwd}/.spawn-report.ndjson`;
+		const reportDirectory = mkdtempSync(path.join(tmpdir(), "ppie-spawn-"));
+		const reportPath = path.join(reportDirectory, "spawn-report.ndjson");
 		const child = spawn(process.execPath, ["--require", preload, worker, ...args], {
 			cwd,
 			env: { ...env, PPIE_SPAWN_REPORT_PATH: reportPath },
@@ -42,6 +45,9 @@ export function runWorker(
 				for (const line of text.split("\n"))
 					if (line) reports.push(JSON.parse(line) as { pid: number; args: string[] });
 			} catch {}
+			try {
+				rmSync(reportDirectory, { recursive: true, force: true });
+			} catch {}
 			const keep = new Set(
 				reports.filter((report) => report.args.some((arg) => arg.includes("sync-run"))).map((report) => report.pid),
 			);
@@ -49,7 +55,9 @@ export function runWorker(
 				killProcessTree(child.pid, keep);
 				stopWatching(child.pid);
 			}
-			adoptReportedChildren(reports);
+			try {
+				adoptReportedChildren(reports);
+			} catch {}
 			if (error) reject(error);
 		}
 		child.on("error", (error) => finish(error));

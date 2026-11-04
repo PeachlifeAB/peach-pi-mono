@@ -10,14 +10,20 @@ function isRunning(pid: number): boolean {
 		process.kill(pid, 0);
 		return true;
 	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ESRCH") return false;
+		const { code } = error as NodeJS.ErrnoException;
+		if (code === "ESRCH" || code === "EPERM") return false;
 		throw error;
 	}
 }
 
 function descendants(pid: number): number[] {
 	if (process.platform === "win32") return [];
-	const output = execFileSync("ps", ["-axo", "pid=,ppid="], { encoding: "utf8" });
+	let output: string;
+	try {
+		output = execFileSync("ps", ["-axo", "pid=,ppid="], { encoding: "utf8" });
+	} catch {
+		return [];
+	}
 	const children = new Map<number, number[]>();
 	for (const line of output.split("\n")) {
 		const [child, parent] = line.trim().split(/\s+/).map(Number);
@@ -58,6 +64,7 @@ export function watchOwner(childPid: number, ownerPid = process.pid): void {
 		detached: process.platform !== "win32",
 		stdio: "ignore",
 	});
+	child.on("error", () => {});
 	child.unref();
 	if (child.pid) watchdogs.set(childPid, child.pid);
 }
