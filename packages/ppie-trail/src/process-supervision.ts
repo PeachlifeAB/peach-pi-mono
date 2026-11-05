@@ -44,7 +44,7 @@ function descendants(pid: number): number[] {
 }
 
 export function killProcessTree(pid: number, keep: ReadonlySet<number> = new Set()): void {
-	if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) return;
+	if (!Number.isInteger(pid) || pid <= 1 || pid === process.pid) return;
 	if (process.platform === "win32") {
 		spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { windowsHide: true });
 		return;
@@ -65,6 +65,11 @@ export function watchOwner(childPid: number, ownerPid = process.pid): void {
 		stdio: "ignore",
 	});
 	child.on("error", () => {});
+	child.once("exit", () => {
+		if (watchdogs.get(childPid) !== child.pid) return;
+		watchdogs.delete(childPid);
+		owned.delete(childPid);
+	});
 	child.unref();
 	if (child.pid) watchdogs.set(childPid, child.pid);
 }
