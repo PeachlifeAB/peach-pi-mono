@@ -49,7 +49,7 @@ catalog:
   "vitest": "5.0.5"
   "@vitest/coverage-v8": "5.0.5"
   "knip": 6.44.0
-  "dependency-cruiser": "18.7.0"
+  "dependency-cruiser": "18.7.2"
   "c8": "12.0.0"
   "tsx": "4.23.15"
   "husky": "9.1.7"
