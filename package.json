@@ -39,7 +39,7 @@
 		"dependency-cruiser": "catalog:",
 		"husky": "catalog:",
 		"knip": "catalog:",
-		"lint-staged": "17.6.0",
+		"lint-staged": "17.6.1",
 		"syncpack": "15.3.3",
 		"tsx": "catalog:",
 		"typescript": "catalog:",
